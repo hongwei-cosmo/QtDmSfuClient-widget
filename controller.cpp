@@ -24,6 +24,7 @@ Controller::Controller(QObject *parent) :
   webSocket_.setSslConfiguration(sslConfiguration);
 
   connect(this, &QSfuSignaling::sendMessgeToSfu, this, &Controller::onSendMessgeToSfu);
+  connect(this, &QSfuSignaling::commandFinished, this, &Controller::onCommandFinished);
   connect(&webSocket_, &QWebSocket::connected, this, &Controller::onConnectedSfu);
   connect(&webSocket_, &QWebSocket::disconnected, this, &Controller::onDisconnectedSfu);
   connect(&webSocket_, &QWebSocket::textMessageReceived, this, &Controller::onReceivedSfuMessage);
@@ -33,6 +34,11 @@ Controller::Controller(QObject *parent) :
 
 Controller::~Controller() {
   delete webrtcProxy_;
+}
+
+bool Controller::connectedSfu() const
+{
+  return connectedSfu_;
 }
 
 void Controller::connectSfu(const std::string& sfuUrl, const std::string& clientId)
@@ -52,11 +58,13 @@ void Controller::disconnectSfu()
 void Controller::onConnectedSfu()
 {
   qDebug("[%s]", __func__);
+  connectedSfu_ = true;
 }
 
 void Controller::onDisconnectedSfu()
 {
   qDebug("[%s]", __func__);
+  connectedSfu_ = false;
 }
 
 void Controller::onReceivedSfuMessage(const QString& message)
@@ -82,6 +90,12 @@ void Controller::onSslErrors(const QList<QSslError> &errors)
 
 void Controller::onSendMessgeToSfu(const std::string& message)
 {
+  qDebug("[%s] msg=\"%s\"", __func__, message.c_str());
   webSocket_.sendTextMessage(QString::fromStdString(message));
+}
+
+void Controller::onCommandFinished(QSfuSignaling::CmdId cmdId, const std::string& result)
+{
+  qDebug("[%s] cmdId:%d, result:%s", __func__, cmdId, result.c_str());
 }
 

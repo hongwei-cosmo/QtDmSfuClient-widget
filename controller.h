@@ -14,6 +14,7 @@ class Controller : public QSfuSignaling
 public:
   explicit Controller(QObject *parent = nullptr);
   ~Controller();
+  bool connectedSfu() const;
 
 Q_SIGNALS:
 
@@ -27,12 +28,14 @@ private Q_SLOTS:
   void onReceivedSfuMessage(const QString &message);
   void onStateChanged(QAbstractSocket::SocketState state);
   void onSslErrors(const QList<QSslError> &errors);
-  void onSendMessgeToSfu(const std::string &message);
 
+  void onSendMessgeToSfu(const std::string &message);
+  void onCommandFinished(CmdId cmdId, const std::string &result);
 
 private:
   QWebRTCProxy *webrtcProxy_;
   QWebSocket webSocket_;
+  bool connectedSfu_ = false;
 };
 
 #endif // CONTROLLER_H
