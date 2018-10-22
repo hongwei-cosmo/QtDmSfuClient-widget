@@ -1,0 +1,3 @@
+[submodule "sfulib"]
+	path = sfulib
+	url = https://github.com/hongwei-cosmo/qt-sfu-lib.git
