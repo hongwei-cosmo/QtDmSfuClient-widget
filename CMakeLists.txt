@@ -13,6 +13,7 @@ endif()
 
 find_package( libwebrtc REQUIRED )
 find_package( QtWebrtc  REQUIRED )
+find_package( dm-sfu-signaling REQUIRED )
 
 if( WIN32 )
   if( BUILD_SHARED_LIBS )
@@ -67,22 +68,22 @@ set( CMAKE_AUTOMOC ON )
 set( CMAKE_AUTOUIC ON )
 set( CMAKE_AUTORCC ON )
 
-add_subdirectory( ${CMAKE_CURRENT_LIST_DIR}/sfulib )
-
 set( sources
- controller.cpp
  mainwindow.cpp
  main.cpp
  dialogconnetsfu.cpp
  dialogcreateroom.cpp
  dialogparticipant.cpp
+ lib/controller.cpp
+ lib/qt_sfu_signaling.cpp
 )
 set( headers
- controller.h
  mainwindow.h
  dialogconnetsfu.h
  dialogcreateroom.h
  dialogparticipant.h
+ lib/controller.h
+ lib/qt_sfu_signaling.h
 )
 set( uis
  mainwindow.ui
@@ -94,12 +95,13 @@ set (resources
  main.qrc
 )
 add_executable( QtDmSfuClient ${sources} ${headers} ${uis} ${resources} )
+target_compile_definitions(QtDmSfuClient PUBLIC QT_NO_KEYWORDS)
 target_link_libraries( QtDmSfuClient
   Qt5::Widgets
   Qt5::Quick
   Qt5::WebSockets
   ${WEBRTC_LIBRARIES}
-  QtDmSfuClientLib
+  dm-sfu-signaling::dm-sfu-signaling
  )
 if( WIN32 )
  target_link_libraries( QtDmSfuClient ${QtWebrtc_EXPORTLIB} )

@@ -1,7 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "controller.h"
+#include "lib/controller.h"
 #include <QMainWindow>
 
 namespace Ui {
