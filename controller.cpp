@@ -11,15 +11,22 @@ Controller::Controller(QObject *parent) :
   QSslConfiguration sslConfiguration;
   QFile certFile(QStringLiteral(":/certs/client.pem"));
   QFile keyFile(QStringLiteral(":/certs/client.key"));
+  QFile caFile(QStringLiteral(":/certs/ca_server.pem"));
   certFile.open(QIODevice::ReadOnly);
   keyFile.open(QIODevice::ReadOnly);
+  caFile.open(QIODevice::ReadOnly);
   QSslCertificate certificate(&certFile, QSsl::Pem);
   QSslKey sslKey(&keyFile, QSsl::Rsa, QSsl::Pem);
+  QSslCertificate caCertificate(&caFile, QSsl::Pem);
   certFile.close();
   keyFile.close();
+  caFile.close();
   sslConfiguration.setPeerVerifyMode(QSslSocket::VerifyNone);
   sslConfiguration.setLocalCertificate(certificate);
+  auto caCerts = sslConfiguration.caCertificates();
+  caCerts.append(caCertificate);
   sslConfiguration.setPrivateKey(sslKey);
+  sslConfiguration.setCaCertificates(caCerts);
   sslConfiguration.setProtocol(QSsl::TlsV1SslV3);
   webSocket_.setSslConfiguration(sslConfiguration);
 
@@ -39,6 +46,12 @@ Controller::~Controller() {
 bool Controller::connectedSfu() const
 {
   return connectedSfu_;
+}
+
+void Controller::createOffer()
+{
+  auto peerConnection = webrtcProxy_->createPeerConnection();
+  peerConnection->createOffer();
 }
 
 void Controller::connectSfu(const std::string& sfuUrl, const std::string& clientId)
@@ -79,13 +92,11 @@ void Controller::onStateChanged(QAbstractSocket::SocketState state)
 
 void Controller::onSslErrors(const QList<QSslError> &errors)
 {
-  Q_UNUSED(errors);
-
-  // WARNING: Never ignore SSL errors in production code.
-  // The proper way to handle self-signed certificates is to add a custom root
-  // to the CA store.
-
-  webSocket_.ignoreSslErrors();
+  qDebug("[%s] num:%d", __func__, errors.size());
+  // TODO
+//  for (auto &e : errors) {
+//    qDebug() << "\t" << e.errorString();
+//  }
 }
 
 void Controller::onSendMessgeToSfu(const std::string& message)
@@ -94,8 +105,8 @@ void Controller::onSendMessgeToSfu(const std::string& message)
   webSocket_.sendTextMessage(QString::fromStdString(message));
 }
 
-void Controller::onCommandFinished(QSfuSignaling::CmdId cmdId, const std::string& result)
+void Controller::onCommandFinished(const std::string &cmd, const std::string& result)
 {
-  qDebug("[%s] cmdId:%d, result:%s", __func__, cmdId, result.c_str());
+  qDebug("[%s] cmd: %d, result:%s", __func__, cmd, result.c_str());
 }
 

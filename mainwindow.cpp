@@ -55,7 +55,8 @@ void MainWindow::on_actionCreateRoom_triggered()
 
 void MainWindow::on_actionCreateAuditRoom_triggered()
 {
-
+  DialogCreateRoom create(this, true);
+  create.exec();
 }
 
 void MainWindow::on_actionDestroyRoom_triggered()

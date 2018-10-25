@@ -15,6 +15,7 @@ public:
   explicit Controller(QObject *parent = nullptr);
   ~Controller();
   bool connectedSfu() const;
+  void createOffer();
 
 Q_SIGNALS:
 
@@ -30,7 +31,7 @@ private Q_SLOTS:
   void onSslErrors(const QList<QSslError> &errors);
 
   void onSendMessgeToSfu(const std::string &message);
-  void onCommandFinished(CmdId cmdId, const std::string &result);
+  void onCommandFinished(const std::string &cmd, const std::string &result);
 
 private:
   QWebRTCProxy *webrtcProxy_;

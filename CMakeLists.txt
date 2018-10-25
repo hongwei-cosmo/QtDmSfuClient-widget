@@ -75,17 +75,20 @@ set( sources
  main.cpp
  dialogconnetsfu.cpp
  dialogcreateroom.cpp
+ dialogparticipant.cpp
 )
 set( headers
  controller.h
  mainwindow.h
  dialogconnetsfu.h
  dialogcreateroom.h
+ dialogparticipant.h
 )
 set( uis
  mainwindow.ui
  dialogconnetsfu.ui
  dialogcreateroom.ui
+ dialogparticipant.ui
 )
 set (resources
  main.qrc

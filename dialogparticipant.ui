@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>DialogCreateRoom</class>
- <widget class="QDialog" name="DialogCreateRoom">
+ <class>DialogParticipant</class>
+ <widget class="QDialog" name="DialogParticipant">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>106</height>
+    <height>207</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,33 +15,26 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <layout class="QFormLayout" name="formLayout">
-     <item row="0" column="0">
-      <widget class="QLabel" name="label">
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="1" column="0">
+      <widget class="QLabel" name="label_PIN">
        <property name="text">
         <string>PIN:</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
-      <widget class="QLineEdit" name="lineEdit_PIN"/>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="label_RecordingID">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_Room">
        <property name="text">
-        <string>Recording ID:</string>
+        <string>Room:</string>
        </property>
       </widget>
      </item>
      <item row="1" column="1">
-      <widget class="QLineEdit" name="lineEdit_RecordingID">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-      </widget>
+      <widget class="QLineEdit" name="lineEdit_PIN"/>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLineEdit" name="lineEdit_Room"/>
      </item>
     </layout>
    </item>
@@ -62,7 +55,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>DialogCreateRoom</receiver>
+   <receiver>DialogParticipant</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -78,7 +71,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>DialogCreateRoom</receiver>
+   <receiver>DialogParticipant</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

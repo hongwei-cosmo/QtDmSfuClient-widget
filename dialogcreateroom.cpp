@@ -2,12 +2,16 @@
 #include "mainwindow.h"
 #include "ui_dialogcreateroom.h"
 
-DialogCreateRoom::DialogCreateRoom(QWidget *parent) :
+DialogCreateRoom::DialogCreateRoom(QWidget *parent, bool audit) :
   QDialog(parent),
-  ui(new Ui::DialogCreateRoom)
+  ui(new Ui::DialogCreateRoom),
+  audit_(audit)
 {
+  Controller *controller = ((MainWindow*)parentWidget())->controller();
   ui->setupUi(this);
-  ui->lineEdit_PIN->setText(QStringLiteral("pin"));
+  ui->lineEdit_PIN->setText(QString::fromStdString(controller->getRoomAccessPin()));
+  ui->label_RecordingID->setVisible(audit_);
+  ui->lineEdit_RecordingID->setVisible(audit_);
 }
 
 DialogCreateRoom::~DialogCreateRoom()
@@ -27,6 +31,11 @@ void DialogCreateRoom::on_buttonBox_accepted()
     return;
   }
 
-//  sfu->setRoomAccessPin(ui->lineEdit_PIN->text().toStdString());
-  controller->createRoom();
+  // TODO
+//  controller->setRoomAccessPin(ui->lineEdit_PIN->text().toStdString());
+  if (audit_) {
+    controller->createAuditRoom(ui->lineEdit_RecordingID->text().toStdString());
+  } else {
+    controller->createRoom();
+  }
 }

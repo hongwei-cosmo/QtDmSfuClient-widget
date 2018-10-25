@@ -12,7 +12,7 @@ class DialogCreateRoom : public QDialog
   Q_OBJECT
 
 public:
-  explicit DialogCreateRoom(QWidget *parent = nullptr);
+  explicit DialogCreateRoom(QWidget *parent = nullptr, bool audit = false);
   ~DialogCreateRoom();
 
 private Q_SLOTS:
@@ -20,6 +20,7 @@ private Q_SLOTS:
 
 private:
   Ui::DialogCreateRoom *ui;
+  bool audit_ = false;
 };
 
 #endif // DIALOGCREATEROOM_H
