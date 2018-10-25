@@ -24,12 +24,13 @@ public:
   std::string getRoomId() const;
   std::string getAnswerSdp() const;
   std::string getRoomAccessPin() const;
-  void gotMsgFromSfu(const std::string &message) const;
 
 public Q_SLOTS:
   void createRoom();
   void createAuditRoom(const std::string &recodingId);
   void destroyRoom();
+
+  void onReceivedSfuMessage(const QString& message);
 
   void joinRoom(const std::string &sdp);
   void seekParticipant(uint64_t offset);

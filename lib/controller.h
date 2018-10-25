@@ -26,7 +26,6 @@ public Q_SLOTS:
 private Q_SLOTS:
   void onConnectedSfu();
   void onDisconnectedSfu();
-  void onReceivedSfuMessage(const QString &message);
   void onStateChanged(QAbstractSocket::SocketState state);
   void onSslErrors(const QList<QSslError> &errors);
 

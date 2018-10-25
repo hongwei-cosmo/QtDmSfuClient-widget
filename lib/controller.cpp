@@ -80,11 +80,6 @@ void Controller::onDisconnectedSfu()
   connectedSfu_ = false;
 }
 
-void Controller::onReceivedSfuMessage(const QString& message)
-{
-  gotMsgFromSfu(message.toStdString());
-}
-
 void Controller::onStateChanged(QAbstractSocket::SocketState state)
 {
   qDebug("[%s] state=%d", __func__, state);

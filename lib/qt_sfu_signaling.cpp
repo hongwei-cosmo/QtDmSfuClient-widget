@@ -178,10 +178,10 @@ std::string QSfuSignaling::getRoomAccessPin() const
   return roomAccessPin_;
 }
 
-void QSfuSignaling::gotMsgFromSfu(const std::string &message) const
+void QSfuSignaling::onReceivedSfuMessage(const QString& message)
 {
   qDebug("[%s]", __func__);
-  callback_(message);
+  callback_(message.toStdString());
 }
 
 void QSfuSignaling::send(const std::string& message)
