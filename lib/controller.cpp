@@ -88,10 +88,9 @@ void Controller::onStateChanged(QAbstractSocket::SocketState state)
 void Controller::onSslErrors(const QList<QSslError> &errors)
 {
   qDebug("[%s] num:%d", __func__, errors.size());
-  // TODO
-//  for (auto &e : errors) {
-//    qDebug() << "\t" << e.errorString();
-//  }
+  for (auto &e : errors) {
+    qDebug() << "\t" << e.errorString();
+  }
 }
 
 void Controller::onSendMessgeToSfu(const std::string& message)
@@ -102,6 +101,6 @@ void Controller::onSendMessgeToSfu(const std::string& message)
 
 void Controller::onCommandFinished(const std::string &cmd, const std::string& result)
 {
-  qDebug("[%s] cmd: %d, result:%s", __func__, cmd, result.c_str());
+  qDebug("[%s] cmd: %s, result:%s", __func__, cmd.c_str(), result.c_str());
 }
 

@@ -36,6 +36,7 @@ void QSfuSignaling::createRoom()
                         [this](const dm::Room::Created &r) {
     if (!r.error) {
       roomId_ = r.result->id;
+      qDebug("\troom id: %s", roomId_.c_str());
     }
     Q_EMIT commandFinished(__func__, r.toString());
   });

@@ -31,8 +31,7 @@ void DialogCreateRoom::on_buttonBox_accepted()
     return;
   }
 
-  // TODO
-//  controller->setRoomAccessPin(ui->lineEdit_PIN->text().toStdString());
+  controller->setRoomAccessPin(ui->lineEdit_PIN->text().toStdString());
   if (audit_) {
     controller->createAuditRoom(ui->lineEdit_RecordingID->text().toStdString());
   } else {

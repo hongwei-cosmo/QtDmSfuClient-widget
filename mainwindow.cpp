@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "dialogconnetsfu.h"
 #include "dialogcreateroom.h"
+#include "dialogparticipant.h"
 #include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -61,12 +62,13 @@ void MainWindow::on_actionCreateAuditRoom_triggered()
 
 void MainWindow::on_actionDestroyRoom_triggered()
 {
-
+    controller_->destroyRoom();
 }
 
 void MainWindow::on_actionJoinRoom_triggered()
 {
-
+    DialogParticipant join(this);
+    join.exec();
 }
 
 void MainWindow::on_actionSeek_triggered()
@@ -81,7 +83,7 @@ void MainWindow::on_actionLimit_triggered()
 
 void MainWindow::on_actionLeaveRoom_triggered()
 {
-
+    controller_->leaveRoom();
 }
 
 void MainWindow::on_actionStreamCamera_triggered()

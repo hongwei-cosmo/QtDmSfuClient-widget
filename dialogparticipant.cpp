@@ -26,8 +26,7 @@ void DialogParticipant::on_buttonBox_accepted()
   if (join_) {
     controller->setRoomId(ui->lineEdit_Room->text().toStdString());
     controller->setRoomAccessPin(ui->lineEdit_PIN->text().toStdString());
-    // TODO
-    //     controller->joinRoom();
+    // controller->joinRoom();
   } else {
     controller->leaveRoom();
   }
