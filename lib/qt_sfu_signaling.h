@@ -59,6 +59,8 @@ Q_SIGNALS:
   void participantKicked(const std::string &roomId, const std::string &reason);
   void activeSpeakerChanged(const std::string &roomId, const std::string &clientId);
   void sendMessgeToSfu(const std::string &message);
+  void gotAnswerInfo(const std::string &sdp);
+
 
 private:
   std::unique_ptr<dm::Client> sfu_;

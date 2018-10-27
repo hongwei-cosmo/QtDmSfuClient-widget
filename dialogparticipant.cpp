@@ -23,11 +23,7 @@ DialogParticipant::~DialogParticipant()
 void DialogParticipant::on_buttonBox_accepted()
 {
   Controller *controller = ((MainWindow*)parentWidget())->controller();
-  if (join_) {
-    controller->setRoomId(ui->lineEdit_Room->text().toStdString());
-    controller->setRoomAccessPin(ui->lineEdit_PIN->text().toStdString());
-    // controller->joinRoom();
-  } else {
-    controller->leaveRoom();
-  }
+  controller->setRoomId(ui->lineEdit_Room->text().toStdString());
+  controller->setRoomAccessPin(ui->lineEdit_PIN->text().toStdString());
+  controller->createOffer();
 }

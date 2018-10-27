@@ -5,8 +5,11 @@
 
 #include <QObject>
 #include <QWebSocket>
+#include <QJsonObject>
 
 class QWebRTCProxy;
+class MediaStreamProxy;
+class PeerConnectionProxy;
 
 class Controller : public QSfuSignaling
 {
@@ -31,11 +34,27 @@ private Q_SLOTS:
 
   void onSendMessgeToSfu(const std::string &message);
   void onCommandFinished(const std::string &cmd, const std::string &result);
+  void onStreamPublished();
+  void onStreamUnpublished(const std::string &streamId);
+  void onParticipantJoined(const std::string &roomId, const std::string &clientId, const std::string &reason);
+  void onParticipantLeft(const std::string &roomId, const std::string &clientId, const std::string &reason);
+  void onParticipantKicked(const std::string &roomId, const std::string &reason);
+  void onActiveSpeakerChanged(const std::string &roomId, const std::string &clientId);
+
+  void onCreatedOfferSuccess(const QJsonObject &sdp);
+  void onGotICECandidate(const QJsonObject &candidate);
+  void onAddedStream(MediaStreamProxy* stream);
+  void onSetRemoteDescriptionSuccess();
+  void onCreatedAnswerSuccess(const QJsonObject &sdp);
+  void onGotAnswerInfo(const std::string &sdp);
+
 
 private:
   QWebRTCProxy *webrtcProxy_;
+  PeerConnectionProxy *peerConnection_;
   QWebSocket webSocket_;
   bool connectedSfu_ = false;
+  bool joinedRoom_ = false;
 };
 
 #endif // CONTROLLER_H

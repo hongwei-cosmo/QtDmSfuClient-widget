@@ -1,5 +1,6 @@
 #include "moc_deps.h"
 #include "QWebRTCProxy.h"
+#include "MediaStreamProxy.h"
 #include "controller.h"
 
 #include <QDebug>
@@ -32,11 +33,19 @@ Controller::Controller(QObject *parent) :
 
   connect(this, &QSfuSignaling::sendMessgeToSfu, this, &Controller::onSendMessgeToSfu);
   connect(this, &QSfuSignaling::commandFinished, this, &Controller::onCommandFinished);
+  connect(this, &QSfuSignaling::streamPublished, this, &Controller::onStreamPublished);
+  connect(this, &QSfuSignaling::streamUnpublished, this, &Controller::onStreamUnpublished);
+  connect(this, &QSfuSignaling::participantJoined, this, &Controller::onParticipantJoined);
+  connect(this, &QSfuSignaling::participantLeft, this, &Controller::onParticipantLeft);
+  connect(this, &QSfuSignaling::participantKicked, this, &Controller::onParticipantKicked);
+  connect(this, &QSfuSignaling::activeSpeakerChanged, this, &Controller::onActiveSpeakerChanged);
   connect(&webSocket_, &QWebSocket::connected, this, &Controller::onConnectedSfu);
   connect(&webSocket_, &QWebSocket::disconnected, this, &Controller::onDisconnectedSfu);
   connect(&webSocket_, &QWebSocket::textMessageReceived, this, &Controller::onReceivedSfuMessage);
   connect(&webSocket_, &QWebSocket::sslErrors, this, &Controller::onSslErrors);
   connect(&webSocket_, &QWebSocket::stateChanged, this, &Controller::onStateChanged);
+
+  peerConnection_ = webrtcProxy_->createPeerConnection();
 }
 
 Controller::~Controller() {
@@ -46,12 +55,6 @@ Controller::~Controller() {
 bool Controller::connectedSfu() const
 {
   return connectedSfu_;
-}
-
-void Controller::createOffer()
-{
-  auto peerConnection = webrtcProxy_->createPeerConnection();
-  peerConnection->createOffer();
 }
 
 void Controller::connectSfu(const std::string& sfuUrl, const std::string& clientId)
@@ -104,3 +107,75 @@ void Controller::onCommandFinished(const std::string &cmd, const std::string& re
   qDebug("[%s] cmd: %s, result:%s", __func__, cmd.c_str(), result.c_str());
 }
 
+void Controller::onStreamPublished()
+{
+    qDebug("[%s]", __func__);
+}
+void Controller::onStreamUnpublished(const std::string &streamId)
+{
+    qDebug("[%s]", __func__);
+}
+void Controller::onParticipantJoined(const std::string &roomId, const std::string &clientId, const std::string &reason)
+{
+    qDebug("[%s]", __func__);
+    joinedRoom_ = true;
+}
+void Controller::onParticipantLeft(const std::string &roomId, const std::string &clientId, const std::string &reason)
+{
+    qDebug("[%s]", __func__);
+    joinedRoom_ = false;
+}
+void Controller::onParticipantKicked(const std::string &roomId, const std::string &reason)
+{
+    qDebug("[%s]", __func__);
+    joinedRoom_ = false;
+}
+void Controller::onActiveSpeakerChanged(const std::string &roomId, const std::string &clientId)
+{
+    qDebug("[%s]", __func__);
+
+}
+
+void Controller::createOffer()
+{
+  connect(peerConnection_, &PeerConnectionProxy::oncreateoffersuccess,
+          this, &Controller::onCreatedOfferSuccess);
+  peerConnection_->createOffer();
+}
+
+void Controller::onCreatedOfferSuccess(const QJsonObject &sdp)
+{
+  qDebug("[%s]", __func__);
+  peerConnection_->setLocalDescription(sdp);
+  connect(this, &QSfuSignaling::gotAnswerInfo, this,
+          &Controller::onGotAnswerInfo);
+  std::string sdp_ = sdp.value("sdp").toString().toStdString();
+  joinRoom(sdp_);
+}
+
+void Controller::onGotICECandidate(const QJsonObject &candidate)
+{
+  qDebug("[%s]", __func__);
+}
+void Controller::onAddedStream(MediaStreamProxy* stream)
+{
+  qDebug("[%s]", __func__);
+}
+void Controller::onSetRemoteDescriptionSuccess()
+{
+  qDebug("[%s]", __func__);
+}
+void Controller::onCreatedAnswerSuccess(const QJsonObject &sdp)
+{
+  qDebug("[%s]", __func__);
+}
+
+void Controller::onGotAnswerInfo(const std::string &sdp)
+{
+  qDebug("[%s] dsp=%s", __func__, sdp.c_str());
+
+  QJsonObject desc;
+  desc["type"] = QString("answer");
+  desc["sdp"]  = QString::fromStdString(sdp);
+  peerConnection_->setRemoteDescription(desc);
+}
