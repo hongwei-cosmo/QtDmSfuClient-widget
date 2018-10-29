@@ -51,7 +51,7 @@ Q_SIGNALS:
    * @param cmdId Command ID
    * @param result "OK" if command is successful. Or it is the error message
    */
-  void commandFinished(const std::string &cmd, const std::string &result);
+  void sendSfuLog(const std::string &log);
   void streamPublished();
   void streamUnpublished(const std::string &streamId);
   void participantJoined(const std::string &roomId, const std::string &clientId, const std::string &reason);

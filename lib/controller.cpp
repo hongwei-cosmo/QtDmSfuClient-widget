@@ -5,6 +5,8 @@
 
 #include <QDebug>
 
+#define LOG Q_EMIT showLog
+
 Controller::Controller(QObject *parent) :
   QSfuSignaling(parent),
   webrtcProxy_(QWebRTCProxy::getInstance())
@@ -28,11 +30,11 @@ Controller::Controller(QObject *parent) :
   caCerts.append(caCertificate);
   sslConfiguration.setPrivateKey(sslKey);
   sslConfiguration.setCaCertificates(caCerts);
-  sslConfiguration.setProtocol(QSsl::TlsV1SslV3);
+  sslConfiguration.setProtocol(QSsl::TlsV1_2);
   webSocket_.setSslConfiguration(sslConfiguration);
 
   connect(this, &QSfuSignaling::sendMessgeToSfu, this, &Controller::onSendMessgeToSfu);
-  connect(this, &QSfuSignaling::commandFinished, this, &Controller::onCommandFinished);
+  connect(this, &QSfuSignaling::sendSfuLog, this, &Controller::onGotSfuLog);
   connect(this, &QSfuSignaling::streamPublished, this, &Controller::onStreamPublished);
   connect(this, &QSfuSignaling::streamUnpublished, this, &Controller::onStreamUnpublished);
   connect(this, &QSfuSignaling::participantJoined, this, &Controller::onParticipantJoined);
@@ -73,7 +75,7 @@ void Controller::disconnectSfu()
 
 void Controller::onConnectedSfu()
 {
-  qDebug("[%s]", __func__);
+  LOG("Successfully connect to SFU");
   connectedSfu_ = true;
 }
 
@@ -91,8 +93,9 @@ void Controller::onStateChanged(QAbstractSocket::SocketState state)
 void Controller::onSslErrors(const QList<QSslError> &errors)
 {
   qDebug("[%s] num:%d", __func__, errors.size());
+  LOG("Got ssl Errors:");
   for (auto &e : errors) {
-    qDebug() << "\t" << e.errorString();
+    LOG("\t" + e.errorString());
   }
 }
 
@@ -102,9 +105,9 @@ void Controller::onSendMessgeToSfu(const std::string& message)
   webSocket_.sendTextMessage(QString::fromStdString(message));
 }
 
-void Controller::onCommandFinished(const std::string &cmd, const std::string& result)
+void Controller::onGotSfuLog(const std::string& log)
 {
-  qDebug("[%s] cmd: %s, result:%s", __func__, cmd.c_str(), result.c_str());
+  Q_EMIT showLog(QString::fromStdString(log));
 }
 
 void Controller::onStreamPublished()

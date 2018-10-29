@@ -21,6 +21,7 @@ public:
   void createOffer();
 
 Q_SIGNALS:
+  void showLog(const QString &log);
 
 public Q_SLOTS:
   void connectSfu(const std::string &sfuUrl, const std::string &clientId);
@@ -33,7 +34,7 @@ private Q_SLOTS:
   void onSslErrors(const QList<QSslError> &errors);
 
   void onSendMessgeToSfu(const std::string &message);
-  void onCommandFinished(const std::string &cmd, const std::string &result);
+  void onGotSfuLog(const std::string &log);
   void onStreamPublished();
   void onStreamUnpublished(const std::string &streamId);
   void onParticipantJoined(const std::string &roomId, const std::string &clientId, const std::string &reason);

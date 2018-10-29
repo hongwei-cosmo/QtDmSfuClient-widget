@@ -58,6 +58,8 @@ set(sources
   dialogconnetsfu.cpp
   dialogcreateroom.cpp
   dialogparticipant.cpp
+  dialogseek.cpp
+  dialoglimit.cpp
   lib/controller.cpp
   lib/qt_sfu_signaling.cpp
   )
@@ -66,6 +68,8 @@ set(headers
   dialogconnetsfu.h
   dialogcreateroom.h
   dialogparticipant.h
+  dialogseek.h
+  dialoglimit.h
   lib/controller.h
   lib/qt_sfu_signaling.h
   )
@@ -74,6 +78,8 @@ set(uis
   dialogconnetsfu.ui
   dialogcreateroom.ui
   dialogparticipant.ui
+  dialogseek.ui
+  dialoglimit.ui
   )
 set(resources
   main.qrc

@@ -3,7 +3,12 @@
 #include "dialogconnetsfu.h"
 #include "dialogcreateroom.h"
 #include "dialogparticipant.h"
+#include "dialogseek.h"
+#include "dialoglimit.h"
 #include <QMessageBox>
+#include <QFileDialog>
+#include <QTextStream>
+#include <QDesktopServices>
 
 MainWindow::MainWindow(QWidget *parent) :
   QMainWindow(parent),
@@ -11,6 +16,7 @@ MainWindow::MainWindow(QWidget *parent) :
   controller_(new Controller)
 {
   ui->setupUi(this);
+  connect(controller_, &Controller::showLog, this, &MainWindow::on_ShowLog);
 }
 
 MainWindow::~MainWindow()
@@ -27,8 +33,8 @@ Controller *MainWindow::controller() const
 
 void MainWindow::on_actionConnect_triggered()
 {
-  DialogConnetSfu connect(this);
-  connect.exec();
+  DialogConnetSfu conn(this);
+  conn.exec();
 }
 
 void MainWindow::on_actionDisconnect_triggered()
@@ -73,12 +79,14 @@ void MainWindow::on_actionJoinRoom_triggered()
 
 void MainWindow::on_actionSeek_triggered()
 {
-
+  DialogSeek seek(this);
+  seek.exec();
 }
 
 void MainWindow::on_actionLimit_triggered()
 {
-
+  DialogLimit limit(this);
+  limit.exec();
 }
 
 void MainWindow::on_actionLeaveRoom_triggered()
@@ -98,30 +106,53 @@ void MainWindow::on_actionStreamDesktop_triggered()
 
 void MainWindow::on_actionLastNone_triggered()
 {
-
+  controller_->lastN(0);
 }
 
 void MainWindow::on_actionLastOne_triggered()
 {
+  controller_->lastN(1);
 
 }
 
 void MainWindow::on_actionLastTwo_triggered()
 {
+  controller_->lastN(2);
 
 }
 
 void MainWindow::on_actionLastFour_triggered()
 {
+  controller_->lastN(4);
 
 }
 
 void MainWindow::on_actionLastAll_triggered()
 {
+  controller_->lastN(-1);
 
 }
 
 void MainWindow::on_actionClearLog_triggered()
 {
+  ui->logWindow->clear();
+}
 
+void MainWindow::on_ShowLog(const QString &log)
+{
+  ui->logWindow->appendPlainText(log);
+}
+
+void MainWindow::on_actionSaveLog_triggered()
+{
+    auto save = QFileDialog::getSaveFileName(this, tr("Save Log"), QDir::currentPath().append("/log.txt"), tr("txt"));
+    QFile f(save);
+    if (f.open(QIODevice::WriteOnly)) {
+      QTextStream s(&f);
+      s << ui->logWindow->toPlainText();
+      f.flush();
+      f.close();
+    }
+
+    QDesktopServices::openUrl(QUrl("file://" + save));
 }

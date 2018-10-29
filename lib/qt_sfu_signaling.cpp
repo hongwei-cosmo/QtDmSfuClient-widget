@@ -1,36 +1,38 @@
 #include "qt_sfu_signaling.h"
 #include <QDebug>
 
+#define LOG Q_EMIT sendSfuLog
+
 QSfuSignaling::QSfuSignaling(QObject *parent) : QObject(parent)
 {
   qDebug("[%s]", __func__);
   sfu_ = std::make_unique<dm::Client>(*this);
   // Set event handlers for sfu_
   sfu_->on<dm::Stream::Event::Published>([=](dm::Stream::Event::Published &r) {
-    qDebug("Sfu event: Stream Published");
+    LOG("Sfu event: Stream Published");
     this->sdpInfo_->addStream(r.streamInfo);
     Q_EMIT streamPublished();
   })
   .on<dm::Stream::Event::Unpublished>([=](dm::Stream::Event::Unpublished &r) {
-    qDebug("Sfu event: Stream unpublished");
+    LOG("Sfu event: Stream unpublished");
     sdpInfo_->removeStream(r.streamId);
     Q_EMIT streamUnpublished(r.streamId);
   })
   .on<dm::Participant::Event::Joined>([=](dm::Participant::Event::Joined &r) {
-    qDebug("Sfu event: Participant Joined");
+    LOG("Sfu event: Participant Joined");
     Q_EMIT participantJoined(r.roomId, r.clientId, r.reason);
   })
   .on<dm::Participant::Event::Left>([=](dm::Participant::Event::Left &r) {
-    qDebug("Sfu event: Participant Left");
+    LOG("Sfu event: Participant Left");
     Q_EMIT participantLeft(r.roomId, r.clientId, r.reason);
   })
   .on<dm::Participant::Event::Kicked>([=](dm::Participant::Event::Kicked &r) {
-    qDebug("Sfu event: Participant Kicked");
+    LOG("Sfu event: Participant Kicked");
     Q_EMIT participantKicked(r.roomId, r.reason);
   })
   .on<dm::Participant::Event::ActiveSpeakerChanded>(
     [=](dm::Participant::Event::ActiveSpeakerChanded &r) {
-    qDebug("Sfu event: Active Speaker Changed");
+      LOG("Sfu event: Active Speaker Changed");
       Q_EMIT activeSpeakerChanged(r.roomId, r.clientId);
   });
 }
@@ -40,11 +42,11 @@ void QSfuSignaling::createRoom()
   qDebug("[%s]", __func__);
   sfu_->createRoom(roomAccessPin_,
                         [this](const dm::Room::Created &r) {
+    LOG("Create Room " + r.toString());
     if (!r.error) {
       roomId_ = r.result->id;
-      qDebug("\troom id: %s", roomId_.c_str());
+      LOG("\tid=" + roomId_);
     }
-    Q_EMIT commandFinished("Create Room", r.toString());
   });
 }
 
@@ -56,7 +58,7 @@ void QSfuSignaling::createAuditRoom(const std::string& recodingId)
     if (!r.error) {
       roomId_ = r.result->id;
     }
-    Q_EMIT commandFinished("Create Audit Room", r.toString());
+    LOG("Create Audit Room " + r.toString());
   });
 }
 
@@ -64,7 +66,7 @@ void QSfuSignaling::destroyRoom()
 {
   qDebug("[%s]", __func__);
   sfu_->destroyRoom(roomId_, [this](const dm::Room::Destroyed &r) {
-    Q_EMIT commandFinished("Destroy Room", r.toString());
+    LOG("Destroy Room " + r.toString());
   });
 }
 
@@ -82,15 +84,16 @@ void QSfuSignaling::joinRoom(const std::string& sdp)
 
       Q_EMIT gotAnswerInfo(sdpInfo_->toString());
 
-      std::vector<dm::VideoProfile> profiles = {
-          {"camera", dm::LayerTraversalAlgorithm::ZigZagSpatialTemporal},
-          {"screenshare", dm::LayerTraversalAlgorithm::SpatialTemporal},
-      };
-      sfu_->setProfiles(roomId_, profiles, [](...){
-          qDebug("Profiles set");
-      });
+      // TODO: crash on mac
+//      std::vector<dm::VideoProfile> profiles = {
+//          {"camera", dm::LayerTraversalAlgorithm::ZigZagSpatialTemporal},
+//          {"screenshare", dm::LayerTraversalAlgorithm::SpatialTemporal},
+//      };
+//      sfu_->setProfiles(roomId_, profiles, [](...){
+//          qDebug("Profiles set");
+//      });
     }
-    Q_EMIT commandFinished("Join Room", r.toString());
+    LOG("Join Room " + r.toString());
   });
 }
 
@@ -98,7 +101,7 @@ void QSfuSignaling::seekParticipant(uint64_t offset)
 {
   qDebug("[%s]", __func__);
   sfu_->seek(roomId_, offset, [this](const dm::Participant::Seeked &r) {
-    Q_EMIT commandFinished("Seek Participant", r.toString());
+    LOG("Seek Participant " + r.toString());
   });
 }
 
@@ -106,7 +109,7 @@ void QSfuSignaling::limitParticipant(uint16_t bitrate)
 {
   qDebug("[%s]", __func__);
   sfu_->limit(roomId_, bitrate, [this](const dm::Participant::Limited &r) {
-    Q_EMIT commandFinished("Limit Participant", r.toString());
+    LOG("Limit Participant " + r.toString());
   });
 
 }
@@ -115,7 +118,7 @@ void QSfuSignaling::leaveRoom()
 {
   qDebug("[%s]", __func__);
   sfu_->leave(roomId_, [this](const dm::Participant::Left &r) {
-    Q_EMIT commandFinished("Leave Room", r.toString());
+    LOG("Leave Room " + r.toString());
   });
 }
 
@@ -134,33 +137,33 @@ void QSfuSignaling::lastN(int n)
   switch (n) {
   case 0:
     sfu_->lastN(roomId_, n, {}, 0, 1, {}, [this](const dm::Participant::LastN &r) {
-      Q_EMIT commandFinished("Last 0", r.toString());
+      LOG("Last None " + r.toString());
     });
     break;
   case 1:
     sfu_->lastN(roomId_, n, {1}, 1, 1, {1}, [this](const dm::Participant::LastN &r) {
-      Q_EMIT commandFinished("Last 1", r.toString());
+      LOG("Last 1 " + r.toString());
     });
     break;
   case 2:
     sfu_->lastN(roomId_, n, {4, 1}, 1, 1, {2}, [this](const dm::Participant::LastN &r) {
-      Q_EMIT commandFinished("Last 2", r.toString());
+      LOG("Last 2 " + r.toString());
     });
     break;
   case 3:
     sfu_->lastN(roomId_, n, {4, 1, 1}, 3, 3, {1, 1, 1}, [this](const dm::Participant::LastN &r) {
-      Q_EMIT commandFinished("Last 3", r.toString());
+      LOG("Last 3 " + r.toString());
     });
     break;
   case 4:
     sfu_->lastN(roomId_, n, {3, 1, 1, 1}, 1, 4, {1}, [this](const dm::Participant::LastN &r) {
-      Q_EMIT commandFinished("Last 4", r.toString());
+      LOG("Last 4 " + r.toString());
     });
     break;
   case -1:
   default:
     sfu_->lastN(roomId_, -1, {}, -1, 1, {}, [this](const dm::Participant::LastN &r) {
-      Q_EMIT commandFinished("Last -1", r.toString());
+      LOG("Last All " + r.toString());
     });
     break;
   }
