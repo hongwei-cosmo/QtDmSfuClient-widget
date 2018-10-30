@@ -11,29 +11,29 @@ QSfuSignaling::QSfuSignaling(QObject *parent) : QObject(parent)
   sfu_->on<dm::Stream::Event::Published>([=](dm::Stream::Event::Published &r) {
     LOG("Sfu event: Stream Published");
     this->sdpInfo_->addStream(r.streamInfo);
-    Q_EMIT streamPublished();
+    Q_EMIT streamPublishedEvent();
   })
   .on<dm::Stream::Event::Unpublished>([=](dm::Stream::Event::Unpublished &r) {
     LOG("Sfu event: Stream unpublished");
     sdpInfo_->removeStream(r.streamId);
-    Q_EMIT streamUnpublished(r.streamId);
+    Q_EMIT streamUnpublishedEvent(r.streamId);
   })
   .on<dm::Participant::Event::Joined>([=](dm::Participant::Event::Joined &r) {
     LOG("Sfu event: Participant Joined");
-    Q_EMIT participantJoined(r.roomId, r.clientId, r.reason);
+    Q_EMIT participantJoinedEvent(r.roomId, r.clientId, r.reason);
   })
   .on<dm::Participant::Event::Left>([=](dm::Participant::Event::Left &r) {
     LOG("Sfu event: Participant Left");
-    Q_EMIT participantLeft(r.roomId, r.clientId, r.reason);
+    Q_EMIT participantLeftEvent(r.roomId, r.clientId, r.reason);
   })
   .on<dm::Participant::Event::Kicked>([=](dm::Participant::Event::Kicked &r) {
     LOG("Sfu event: Participant Kicked");
-    Q_EMIT participantKicked(r.roomId, r.reason);
+    Q_EMIT participantKickedEvent(r.roomId, r.reason);
   })
   .on<dm::Participant::Event::ActiveSpeakerChanded>(
     [=](dm::Participant::Event::ActiveSpeakerChanded &r) {
       LOG("Sfu event: Active Speaker Changed");
-      Q_EMIT activeSpeakerChanged(r.roomId, r.clientId);
+      Q_EMIT activeSpeakerChangedEvent(r.roomId, r.clientId);
   });
 }
 
@@ -122,13 +122,31 @@ void QSfuSignaling::leaveRoom()
   });
 }
 
-void QSfuSignaling::cameraStream()
+void QSfuSignaling::publishCamera(const StreamInfo::shared &streamInfo)
 {
-
+  qDebug("[%s]", __func__);
+  sfu_->publish(roomId_, dm::StreamKind::Camera, "camera", streamInfo, [=](const dm::Stream::Published &published) {
+    if (published.error) {
+      LOG("PublishCamera: Failed. Error: " + published.error->message);
+    }
+    Q_EMIT publishedStream((published.error?false:true));
+  });
 }
 
-void QSfuSignaling::desktopStream()
+void QSfuSignaling::publishDesktop(const StreamInfo::shared &streamInfo)
 {
+  qDebug("[%s]", __func__);
+  sfu_->publish(roomId_, dm::StreamKind::Desktop, "desktop", streamInfo, [=](const dm::Stream::Published &published) {
+    if (published.error) {
+      LOG("PublishCamera: Failed. Error: " + published.error->message);
+    }
+    Q_EMIT publishedStream(published.error?false:true);
+  });
+}
+
+void QSfuSignaling::unpublishStream()
+{
+  qDebug("[%s]", __func__);
 
 }
 

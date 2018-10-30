@@ -91,17 +91,17 @@ void MainWindow::on_actionLimit_triggered()
 
 void MainWindow::on_actionLeaveRoom_triggered()
 {
-    controller_->leaveRoom();
+  controller_->leaveRoom();
 }
 
 void MainWindow::on_actionStreamCamera_triggered()
 {
-
+  controller_->publishCamera();
 }
 
 void MainWindow::on_actionStreamDesktop_triggered()
 {
-
+  controller_->publishDesktop();
 }
 
 void MainWindow::on_actionLastNone_triggered()

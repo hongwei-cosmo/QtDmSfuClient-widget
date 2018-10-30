@@ -35,12 +35,12 @@ Controller::Controller(QObject *parent) :
 
   connect(this, &QSfuSignaling::sendMessgeToSfu, this, &Controller::onSendMessgeToSfu);
   connect(this, &QSfuSignaling::sendSfuLog, this, &Controller::onGotSfuLog);
-  connect(this, &QSfuSignaling::streamPublished, this, &Controller::onStreamPublished);
-  connect(this, &QSfuSignaling::streamUnpublished, this, &Controller::onStreamUnpublished);
-  connect(this, &QSfuSignaling::participantJoined, this, &Controller::onParticipantJoined);
-  connect(this, &QSfuSignaling::participantLeft, this, &Controller::onParticipantLeft);
-  connect(this, &QSfuSignaling::participantKicked, this, &Controller::onParticipantKicked);
-  connect(this, &QSfuSignaling::activeSpeakerChanged, this, &Controller::onActiveSpeakerChanged);
+  connect(this, &QSfuSignaling::streamPublishedEvent, this, &Controller::onStreamPublished);
+  connect(this, &QSfuSignaling::streamUnpublishedEvent, this, &Controller::onStreamUnpublished);
+  connect(this, &QSfuSignaling::participantJoinedEvent, this, &Controller::onParticipantJoined);
+  connect(this, &QSfuSignaling::participantLeftEvent, this, &Controller::onParticipantLeft);
+  connect(this, &QSfuSignaling::participantKickedEvent, this, &Controller::onParticipantKicked);
+  connect(this, &QSfuSignaling::activeSpeakerChangedEvent, this, &Controller::onActiveSpeakerChanged);
   connect(&webSocket_, &QWebSocket::connected, this, &Controller::onConnectedSfu);
   connect(&webSocket_, &QWebSocket::disconnected, this, &Controller::onDisconnectedSfu);
   connect(&webSocket_, &QWebSocket::textMessageReceived, this, &Controller::onReceivedSfuMessage);
@@ -144,6 +144,22 @@ void Controller::createOffer()
   connect(peerConnection_, &PeerConnectionProxy::oncreateoffersuccess,
           this, &Controller::onCreatedOfferSuccess);
   peerConnection_->createOffer();
+}
+
+void Controller::publishCamera()
+{
+  auto videoTrack = webrtcProxy_->createVideoCapturer()->getVideoTrack();
+  auto audioTrack = webrtcProxy_->createAudioCapturer()->getAudioTrack();
+
+  auto stream = webrtcProxy_->createLocalStream("camera");
+  stream->addTrack(videoTrack);
+  stream->addTrack(audioTrack);
+
+}
+
+void Controller::publishDesktop()
+{
+
 }
 
 void Controller::onCreatedOfferSuccess(const QJsonObject &sdp)

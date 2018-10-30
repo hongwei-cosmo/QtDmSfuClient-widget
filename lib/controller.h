@@ -19,6 +19,8 @@ public:
   ~Controller();
   bool connectedSfu() const;
   void createOffer();
+  void publishCamera();
+  void publishDesktop();
 
 Q_SIGNALS:
   void showLog(const QString &log);

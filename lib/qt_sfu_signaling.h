@@ -36,9 +36,9 @@ public Q_SLOTS:
   void seekParticipant(uint64_t offset);
   void limitParticipant(uint16_t bitrate);
   void leaveRoom();
-
-  void cameraStream();
-  void desktopStream();
+  void publishCamera(const StreamInfo::shared &streamInfo);
+  void publishDesktop(const StreamInfo::shared &streamInfo);
+  void unpublishStream();
 
   void lastN(int n);
 
@@ -52,14 +52,16 @@ Q_SIGNALS:
    * @param result "OK" if command is successful. Or it is the error message
    */
   void sendSfuLog(const std::string &log);
-  void streamPublished();
-  void streamUnpublished(const std::string &streamId);
-  void participantJoined(const std::string &roomId, const std::string &clientId, const std::string &reason);
-  void participantLeft(const std::string &roomId, const std::string &clientId, const std::string &reason);
-  void participantKicked(const std::string &roomId, const std::string &reason);
-  void activeSpeakerChanged(const std::string &roomId, const std::string &clientId);
+  void streamPublishedEvent();
+  void streamUnpublishedEvent(const std::string &streamId);
+  void participantJoinedEvent(const std::string &roomId, const std::string &clientId, const std::string &reason);
+  void participantLeftEvent(const std::string &roomId, const std::string &clientId, const std::string &reason);
+  void participantKickedEvent(const std::string &roomId, const std::string &reason);
+  void activeSpeakerChangedEvent(const std::string &roomId, const std::string &clientId);
   void sendMessgeToSfu(const std::string &message);
   void gotAnswerInfo(const std::string &sdp);
+
+  void publishedStream(bool success);
 
 
 private:
