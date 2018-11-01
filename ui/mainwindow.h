@@ -57,8 +57,6 @@ private Q_SLOTS:
 
   void on_actionClearLog_triggered();
 
-  void on_ShowLog(const QString &log);
-
   void on_actionSaveLog_triggered();
 
 private:

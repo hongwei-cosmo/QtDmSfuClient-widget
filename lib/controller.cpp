@@ -186,7 +186,7 @@ void Controller::publishDesktop()
 
 void Controller::Log(const std::string &log)
 {
-  Q_EMIT logger(QString::fromStdString(log));
+  if (logger) logger(log);
 }
 
 void Controller::onCreatedJoinRoomOfferSuccess(const QJsonObject &sdp)

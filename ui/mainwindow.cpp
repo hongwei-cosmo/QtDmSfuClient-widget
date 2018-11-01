@@ -17,7 +17,9 @@ MainWindow::MainWindow(QWidget *parent) :
   controller_(new Controller)
 {
   ui->setupUi(this);
-  connect(controller_, &Controller::logger, this, &MainWindow::on_ShowLog);
+  controller_->logger = [=](const std::string &log) {
+    ui->logWindow->appendPlainText(QString::fromStdString(log));
+  };
 }
 
 MainWindow::~MainWindow()
@@ -133,11 +135,6 @@ void MainWindow::on_actionLastAll_triggered()
 void MainWindow::on_actionClearLog_triggered()
 {
   ui->logWindow->clear();
-}
-
-void MainWindow::on_ShowLog(const QString &log)
-{
-  ui->logWindow->appendPlainText(log);
 }
 
 void MainWindow::on_actionSaveLog_triggered()

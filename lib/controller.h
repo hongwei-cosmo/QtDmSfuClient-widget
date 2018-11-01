@@ -30,11 +30,9 @@ public:
   virtual void send(const std::string &message) final;
   void publishCamera();
   void publishDesktop();
+  std::function<void(const std::string &log)> logger = nullptr;
 
   virtual void Log(const std::string &log) final;
-
-Q_SIGNALS:
-  void logger(const QString &msg);
 
 public Q_SLOTS:
   void connectSfu(const std::string &sfuUrl, const std::string &clientId);
