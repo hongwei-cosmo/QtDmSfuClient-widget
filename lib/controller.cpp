@@ -84,11 +84,33 @@ void Controller::onDisconnectedSfu()
 void Controller::onStateChanged(QAbstractSocket::SocketState state)
 {
   qDebug("[%s] state=%d", __func__, state);
+  switch (state) {
+    case QAbstractSocket::SocketState::UnconnectedState:
+      Log("WS:Unconnected");
+      break;
+    case QAbstractSocket::SocketState::HostLookupState:
+      Log("WS:HostLookup");
+      break;
+    case QAbstractSocket::SocketState::ConnectingState:
+      Log("WS:Connecting");
+      break;
+    case QAbstractSocket::SocketState::ConnectedState:
+      Log("WS:Connected");
+      break;
+    case QAbstractSocket::SocketState::BoundState:
+      Log("WS:Bound");
+      break;
+    case QAbstractSocket::SocketState::ListeningState:
+      Log("WS:Listening");
+      break;
+    case QAbstractSocket::SocketState::ClosingState:
+      Log("WS:Closing");
+      break;
+  }
 }
 
 void Controller::onSslErrors(const QList<QSslError> &errors)
 {
-  qDebug("[%s] num:%d", __func__, errors.size());
   Log("Got ssl Errors:");
   for (auto &e : errors) {
     Log("\t" + e.errorString().toStdString());
