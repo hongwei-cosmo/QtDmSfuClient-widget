@@ -25,5 +25,5 @@ void DialogParticipant::on_buttonBox_accepted()
   Controller *controller = ((MainWindow*)parentWidget())->controller();
   controller->setRoomId(ui->lineEdit_Room->text().toStdString());
   controller->setRoomAccessPin(ui->lineEdit_PIN->text().toStdString());
-  controller->createOfferForJoinRoom();
+  controller->joinRoom();
 }

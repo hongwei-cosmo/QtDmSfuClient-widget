@@ -33,7 +33,6 @@ Controller::Controller(QObject *parent) :
   sslConfiguration.setProtocol(QSsl::TlsV1_2);
   webSocket_.setSslConfiguration(sslConfiguration);
 
-  connect(this, &QSfuSignaling::sendMessgeToSfu, this, &Controller::onSendMessgeToSfu);
   connect(this, &QSfuSignaling::sendSfuLog, this, &Controller::onGotSfuLog);
   connect(this, &QSfuSignaling::streamPublishedEvent, this, &Controller::onStreamPublished);
   connect(this, &QSfuSignaling::streamUnpublishedEvent, this, &Controller::onStreamUnpublished);
@@ -99,7 +98,7 @@ void Controller::onSslErrors(const QList<QSslError> &errors)
   }
 }
 
-void Controller::onSendMessgeToSfu(const std::string &message)
+void Controller::send(const std::string &message)
 {
   qDebug("[%s] msg=\"%s\"", __func__, message.c_str());
   webSocket_.sendTextMessage(QString::fromStdString(message));
@@ -141,7 +140,7 @@ void Controller::onPublishedStream(bool success)
   qDebug("[%s]", __func__);
 }
 
-void Controller::createOfferForJoinRoom()
+void Controller::joinRoom()
 {
   peerConnection_->disconnect(SIGNAL(oncreateoffersuccess));
   connect(peerConnection_, &PeerConnectionProxy::oncreateoffersuccess,
@@ -160,7 +159,7 @@ void Controller::publishCamera()
   stream->addTrack(audioTrack);
   peerConnection_->addStream(stream);
   // TODO: render stream
-  disconnect(peerConnection_, &PeerConnectionProxy::oncreateanswersuccess, nullptr, nullptr);
+  peerConnection_->disconnect(SIGNAL(oncreateoffersuccess));
   connect(peerConnection_, &PeerConnectionProxy::oncreateoffersuccess,
           this, &Controller::onCreatedPublishCameraOfferSuccess);
   peerConnection_->createOffer();
@@ -175,10 +174,32 @@ void Controller::onCreatedJoinRoomOfferSuccess(const QJsonObject &sdp)
 {
   qDebug("[%s]", __func__);
   peerConnection_->setLocalDescription(sdp);
-  connect(this, &QSfuSignaling::gotAnswerInfo, this,
-          &Controller::onGotAnswerInfo);
   std::string sdp_ = sdp.value("sdp").toString().toStdString();
-  joinRoom(sdp_);
+  auto offerInfo = SDPInfo::parse(sdp_);
+  sfu_->join(roomId_, roomAccessPin_, offerInfo,
+                  [this](const dm::Participant::Joined &r) {
+    if (!r.error) {
+      sdpInfo_ = r.result->sdpInfo;
+      for (auto stream : r.result->streams) {
+        sdpInfo_->addStream(stream);
+      }
+
+      QJsonObject desc;
+      desc["type"] = QString("answer");
+      desc["sdp"]  = QString::fromStdString(sdpInfo_->toString());
+      peerConnection_->setRemoteDescription(desc);
+
+      // TODO: crash on mac
+//      std::vector<dm::VideoProfile> profiles = {
+//          {"camera", dm::LayerTraversalAlgorithm::ZigZagSpatialTemporal},
+//          {"screenshare", dm::LayerTraversalAlgorithm::SpatialTemporal},
+//      };
+//      sfu_->setProfiles(roomId_, profiles, [](...){
+//          LOG("Profiles set");
+//      });
+    }
+    LOG("Join Room " + QString::fromStdString(r.toString()));
+  });
 }
 
 void Controller::onCreatedPublishCameraOfferSuccess(const QJsonObject &sdp)
@@ -210,14 +231,4 @@ void Controller::onSetRemoteDescriptionSuccess()
 void Controller::onCreatedAnswerSuccess(const QJsonObject &sdp)
 {
   qDebug("[%s]", __func__);
-}
-
-void Controller::onGotAnswerInfo(const std::string &sdp)
-{
-  LOG("Got Answer form sfu: ");
-  LOG(QString::fromStdString(sdp));
-  QJsonObject desc;
-  desc["type"] = QString("answer");
-  desc["sdp"]  = QString::fromStdString(sdp);
-  peerConnection_->setRemoteDescription(desc);
 }

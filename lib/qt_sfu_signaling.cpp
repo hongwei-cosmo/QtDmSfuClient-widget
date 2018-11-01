@@ -70,33 +70,6 @@ void QSfuSignaling::destroyRoom()
   });
 }
 
-void QSfuSignaling::joinRoom(const std::string& sdp)
-{
-  qDebug("[%s]", __func__);
-  auto offerInfo = SDPInfo::parse(sdp);
-  sfu_->join(roomId_, roomAccessPin_, offerInfo,
-                  [this](const dm::Participant::Joined &r) {
-    if (!r.error) {
-      sdpInfo_ = r.result->sdpInfo;
-      for (auto stream : r.result->streams) {
-        sdpInfo_->addStream(stream);
-      }
-
-      Q_EMIT gotAnswerInfo(sdpInfo_->toString());
-
-      // TODO: crash on mac
-//      std::vector<dm::VideoProfile> profiles = {
-//          {"camera", dm::LayerTraversalAlgorithm::ZigZagSpatialTemporal},
-//          {"screenshare", dm::LayerTraversalAlgorithm::SpatialTemporal},
-//      };
-//      sfu_->setProfiles(roomId_, profiles, [](...){
-//          qDebug("Profiles set");
-//      });
-    }
-    LOG("Join Room " + r.toString());
-  });
-}
-
 void QSfuSignaling::seekParticipant(uint64_t offset)
 {
   qDebug("[%s]", __func__);
@@ -216,12 +189,6 @@ void QSfuSignaling::onReceivedSfuMessage(const QString& message)
 {
   qDebug("[%s]", __func__);
   callback_(message.toStdString());
-}
-
-void QSfuSignaling::send(const std::string& message)
-{
-  qDebug("[%s]", __func__);
-  Q_EMIT sendMessgeToSfu(message);
 }
 
 void QSfuSignaling::onmessage(const std::function<bool (const std::string&)> &callback)

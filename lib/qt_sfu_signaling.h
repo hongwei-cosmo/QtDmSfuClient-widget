@@ -32,7 +32,7 @@ public Q_SLOTS:
 
   void onReceivedSfuMessage(const QString& message);
 
-  void joinRoom(const std::string &sdp);
+  virtual void joinRoom() = 0;
   void seekParticipant(uint64_t offset);
   void limitParticipant(uint16_t bitrate);
   void leaveRoom();
@@ -57,20 +57,18 @@ Q_SIGNALS:
   void participantLeftEvent(const std::string &roomId, const std::string &clientId, const std::string &reason);
   void participantKickedEvent(const std::string &roomId, const std::string &reason);
   void activeSpeakerChangedEvent(const std::string &roomId, const std::string &clientId);
-  void sendMessgeToSfu(const std::string &message);
   void gotAnswerInfo(const std::string &sdp);
 
   void publishedStream(bool success);
 
 
-private:
+protected:
   std::unique_ptr<dm::Client> sfu_;
   std::string roomId_;
   std::string roomAccessPin_ = "pin";
   SDPInfo::shared sdpInfo_;
   std::function<bool (const std::string&)> callback_ = nullptr;
 
-  virtual void send(const std::string &message) override;
   virtual void onmessage(const std::function<bool(const std::string &message)> &callback) override;
 };
 

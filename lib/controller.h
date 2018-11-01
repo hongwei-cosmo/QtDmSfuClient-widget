@@ -26,7 +26,8 @@ public:
   explicit Controller(QObject *parent = nullptr);
   ~Controller();
   State getState() const;
-  void createOfferForJoinRoom();
+  virtual void joinRoom() final;
+  virtual void send(const std::string &message) final;
   void publishCamera();
   void publishDesktop();
 
@@ -43,7 +44,6 @@ private Q_SLOTS:
   void onStateChanged(QAbstractSocket::SocketState state);
   void onSslErrors(const QList<QSslError> &errors);
 
-  void onSendMessgeToSfu(const std::string &message);
   void onGotSfuLog(const QString &log);
   void onStreamPublished();
   void onStreamUnpublished(const std::string &streamId);
@@ -60,8 +60,6 @@ private Q_SLOTS:
   void onAddedStream(MediaStreamProxy* stream);
   void onSetRemoteDescriptionSuccess();
   void onCreatedAnswerSuccess(const QJsonObject &sdp);
-  void onGotAnswerInfo(const std::string &sdp);
-
 
 private:
   QWebRTCProxy *webrtcProxy_;
