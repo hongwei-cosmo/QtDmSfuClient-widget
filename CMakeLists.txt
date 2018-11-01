@@ -53,41 +53,41 @@ else(UNIX)
 endif()
 
 set(sources
-  mainwindow.cpp
-  main.cpp
-  dialogconnetsfu.cpp
-  dialogcreateroom.cpp
-  dialogparticipant.cpp
-  dialogseek.cpp
-  dialoglimit.cpp
+  ui/mainwindow.cpp
+  ui/main.cpp
+  ui/dialogconnetsfu.cpp
+  ui/dialogcreateroom.cpp
+  ui/dialogparticipant.cpp
+  ui/dialogseek.cpp
+  ui/dialoglimit.cpp
   lib/controller.cpp
   lib/qt_sfu_signaling.cpp
   )
 set(headers
-  mainwindow.h
-  dialogconnetsfu.h
-  dialogcreateroom.h
-  dialogparticipant.h
-  dialogseek.h
-  dialoglimit.h
+  ui/mainwindow.h
+  ui/dialogconnetsfu.h
+  ui/dialogcreateroom.h
+  ui/dialogparticipant.h
+  ui/dialogseek.h
+  ui/dialoglimit.h
   lib/controller.h
   lib/qt_sfu_signaling.h
   )
 set(uis
-  mainwindow.ui
-  dialogconnetsfu.ui
-  dialogcreateroom.ui
-  dialogparticipant.ui
-  dialogseek.ui
-  dialoglimit.ui
+  ui/mainwindow.ui
+  ui/dialogconnetsfu.ui
+  ui/dialogcreateroom.ui
+  ui/dialogparticipant.ui
+  ui/dialogseek.ui
+  ui/dialoglimit.ui
   )
 set(resources
-  main.qrc
+  ui/main.qrc
   )
 add_executable(QtDmSfuClient MACOSX_BUNDLE ${sources} ${headers} ${uis} ${resources})
 if(APPLE)
   set_target_properties(QtDmSfuClient PROPERTIES
-    MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/Info.plist"
+    MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/ui/Info.plist"
   )
 endif()
 target_compile_definitions(QtDmSfuClient PUBLIC QT_NO_KEYWORDS)
