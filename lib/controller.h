@@ -31,8 +31,10 @@ public:
   void publishCamera();
   void publishDesktop();
 
+  virtual void Log(const std::string &log) final;
+
 Q_SIGNALS:
-  void showLog(const QString &log);
+  void logger(const QString &msg);
 
 public Q_SLOTS:
   void connectSfu(const std::string &sfuUrl, const std::string &clientId);
@@ -44,7 +46,6 @@ private Q_SLOTS:
   void onStateChanged(QAbstractSocket::SocketState state);
   void onSslErrors(const QList<QSslError> &errors);
 
-  void onGotSfuLog(const QString &log);
   void onStreamPublished();
   void onStreamUnpublished(const std::string &streamId);
   void onParticipantJoined(const std::string &roomId, const std::string &clientId, const std::string &reason);

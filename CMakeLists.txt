@@ -52,7 +52,19 @@ else(UNIX)
   endif()
 endif()
 
-set(sources
+set(lib
+  lib/controller.cpp
+  lib/qt_sfu_signaling.cpp
+  lib/controller.h
+  lib/qt_sfu_signaling.h
+  )
+set(ui
+  ui/mainwindow.h
+  ui/dialogconnetsfu.h
+  ui/dialogcreateroom.h
+  ui/dialogparticipant.h
+  ui/dialogseek.h
+  ui/dialoglimit.h
   ui/mainwindow.cpp
   ui/main.cpp
   ui/dialogconnetsfu.cpp
@@ -60,20 +72,6 @@ set(sources
   ui/dialogparticipant.cpp
   ui/dialogseek.cpp
   ui/dialoglimit.cpp
-  lib/controller.cpp
-  lib/qt_sfu_signaling.cpp
-  )
-set(headers
-  ui/mainwindow.h
-  ui/dialogconnetsfu.h
-  ui/dialogcreateroom.h
-  ui/dialogparticipant.h
-  ui/dialogseek.h
-  ui/dialoglimit.h
-  lib/controller.h
-  lib/qt_sfu_signaling.h
-  )
-set(uis
   ui/mainwindow.ui
   ui/dialogconnetsfu.ui
   ui/dialogcreateroom.ui
@@ -84,7 +82,7 @@ set(uis
 set(resources
   ui/main.qrc
   )
-add_executable(QtDmSfuClient MACOSX_BUNDLE ${sources} ${headers} ${uis} ${resources})
+add_executable(QtDmSfuClient MACOSX_BUNDLE ${lib} ${ui} ${resources})
 if(APPLE)
   set_target_properties(QtDmSfuClient PROPERTIES
     MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/ui/Info.plist"
@@ -95,8 +93,6 @@ target_link_libraries(QtDmSfuClient
   Qt5::Widgets
   Qt5::Quick
   Qt5::WebSockets
-  ${WEBRTC_LIBRARIES}
   ${QtWebrtc_LIBRARIES}
   dm-sfu-signaling::dm-sfu-signaling
   )
-

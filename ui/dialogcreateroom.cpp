@@ -1,5 +1,5 @@
-#include "dialogcreateroom.h"
 #include "mainwindow.h"
+#include "dialogcreateroom.h"
 #include "ui_dialogcreateroom.h"
 
 DialogCreateRoom::DialogCreateRoom(QWidget *parent, bool audit) :
@@ -7,11 +7,14 @@ DialogCreateRoom::DialogCreateRoom(QWidget *parent, bool audit) :
   ui(new Ui::DialogCreateRoom),
   audit_(audit)
 {
-  Controller *controller = ((MainWindow*)parentWidget())->controller();
+  Controller *controller = dynamic_cast<MainWindow*>(parentWidget())->controller();
   ui->setupUi(this);
   ui->lineEdit_PIN->setText(QString::fromStdString(controller->getRoomAccessPin()));
   ui->label_RecordingID->setVisible(audit_);
   ui->lineEdit_RecordingID->setVisible(audit_);
+  if (audit_) {
+    this->setWindowTitle(tr("Create A Audit Room"));
+  }
 }
 
 DialogCreateRoom::~DialogCreateRoom()
@@ -21,7 +24,7 @@ DialogCreateRoom::~DialogCreateRoom()
 
 void DialogCreateRoom::on_buttonBox_accepted()
 {
-  Controller *controller = ((MainWindow*)parentWidget())->controller();
+  Controller *controller = dynamic_cast<MainWindow*>(parentWidget())->controller();
   if (controller->getState() == Controller::State::Disconnected) {
     qDebug("[%s] Not yet connected to SFU", __func__);
     return;

@@ -1,5 +1,5 @@
-#include "dialogparticipant.h"
 #include "mainwindow.h"
+#include "dialogparticipant.h"
 #include "ui_dialogparticipant.h"
 
 DialogParticipant::DialogParticipant(QWidget *parent, bool join) :

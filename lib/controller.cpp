@@ -5,8 +5,6 @@
 
 #include <QDebug>
 
-#define LOG(s) Q_EMIT showLog(QString("[Controller:%1] %2").arg(__LINE__).arg(s))
-
 Controller::Controller(QObject *parent) :
   QSfuSignaling(parent),
   webrtcProxy_(QWebRTCProxy::getInstance())
@@ -33,7 +31,6 @@ Controller::Controller(QObject *parent) :
   sslConfiguration.setProtocol(QSsl::TlsV1_2);
   webSocket_.setSslConfiguration(sslConfiguration);
 
-  connect(this, &QSfuSignaling::sendSfuLog, this, &Controller::onGotSfuLog);
   connect(this, &QSfuSignaling::streamPublishedEvent, this, &Controller::onStreamPublished);
   connect(this, &QSfuSignaling::streamUnpublishedEvent, this, &Controller::onStreamUnpublished);
   connect(this, &QSfuSignaling::participantJoinedEvent, this, &Controller::onParticipantJoined);
@@ -74,7 +71,7 @@ void Controller::disconnectSfu()
 
 void Controller::onConnectedSfu()
 {
-  LOG("Successfully connect to SFU");
+  Log("Successfully connect to SFU");
   state = State::Connected;
 }
 
@@ -92,9 +89,9 @@ void Controller::onStateChanged(QAbstractSocket::SocketState state)
 void Controller::onSslErrors(const QList<QSslError> &errors)
 {
   qDebug("[%s] num:%d", __func__, errors.size());
-  LOG("Got ssl Errors:");
+  Log("Got ssl Errors:");
   for (auto &e : errors) {
-    LOG("\t" + e.errorString());
+    Log("\t" + e.errorString().toStdString());
   }
 }
 
@@ -102,11 +99,6 @@ void Controller::send(const std::string &message)
 {
   qDebug("[%s] msg=\"%s\"", __func__, message.c_str());
   webSocket_.sendTextMessage(QString::fromStdString(message));
-}
-
-void Controller::onGotSfuLog(const QString &log)
-{
-  Q_EMIT showLog(log);
 }
 
 void Controller::onStreamPublished()
@@ -170,6 +162,11 @@ void Controller::publishDesktop()
   state = State::Desktop;
 }
 
+void Controller::Log(const std::string &log)
+{
+  Q_EMIT logger(QString::fromStdString(log));
+}
+
 void Controller::onCreatedJoinRoomOfferSuccess(const QJsonObject &sdp)
 {
   qDebug("[%s]", __func__);
@@ -189,16 +186,16 @@ void Controller::onCreatedJoinRoomOfferSuccess(const QJsonObject &sdp)
       desc["sdp"]  = QString::fromStdString(sdpInfo_->toString());
       peerConnection_->setRemoteDescription(desc);
 
-      // TODO: crash on mac
+      // FIXME: crash on mac
 //      std::vector<dm::VideoProfile> profiles = {
 //          {"camera", dm::LayerTraversalAlgorithm::ZigZagSpatialTemporal},
 //          {"screenshare", dm::LayerTraversalAlgorithm::SpatialTemporal},
 //      };
 //      sfu_->setProfiles(roomId_, profiles, [](...){
-//          LOG("Profiles set");
+//          Log("Profiles set");
 //      });
     }
-    LOG("Join Room " + QString::fromStdString(r.toString()));
+    Log("Join Room " + r.toString());
   });
 }
 

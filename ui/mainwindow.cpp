@@ -8,6 +8,7 @@
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QTextStream>
+#include <QTemporaryFile>
 #include <QDesktopServices>
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -16,7 +17,7 @@ MainWindow::MainWindow(QWidget *parent) :
   controller_(new Controller)
 {
   ui->setupUi(this);
-  connect(controller_, &Controller::showLog, this, &MainWindow::on_ShowLog);
+  connect(controller_, &Controller::logger, this, &MainWindow::on_ShowLog);
 }
 
 MainWindow::~MainWindow()
@@ -112,25 +113,21 @@ void MainWindow::on_actionLastNone_triggered()
 void MainWindow::on_actionLastOne_triggered()
 {
   controller_->lastN(1);
-
 }
 
 void MainWindow::on_actionLastTwo_triggered()
 {
   controller_->lastN(2);
-
 }
 
 void MainWindow::on_actionLastFour_triggered()
 {
   controller_->lastN(4);
-
 }
 
 void MainWindow::on_actionLastAll_triggered()
 {
   controller_->lastN(-1);
-
 }
 
 void MainWindow::on_actionClearLog_triggered()
@@ -145,7 +142,8 @@ void MainWindow::on_ShowLog(const QString &log)
 
 void MainWindow::on_actionSaveLog_triggered()
 {
-    auto save = QFileDialog::getSaveFileName(this, tr("Save Log"), QDir::currentPath().append("/log.txt"), tr("txt"));
+    auto save = QFileDialog::getSaveFileName(this, tr("Save Log"),
+      QDir::currentPath().append("/log.txt"), tr("txt"));
     QFile f(save);
     if (f.open(QIODevice::WriteOnly)) {
       QTextStream s(&f);

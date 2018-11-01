@@ -1,5 +1,5 @@
-#include "dialogseek.h"
 #include "mainwindow.h"
+#include "dialogseek.h"
 #include "ui_dialogseek.h"
 
 DialogSeek::DialogSeek(QWidget *parent) :

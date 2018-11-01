@@ -21,35 +21,31 @@ public:
   explicit QSfuSignaling(QObject *parent = nullptr);
   virtual ~QSfuSignaling() = default;
 
-  std::string getRoomId() const;
-  std::string getAnswerSdp() const;
-  std::string getRoomAccessPin() const;
-
-public Q_SLOTS:
   void createRoom();
   void createAuditRoom(const std::string &recodingId);
   void destroyRoom();
-
-  void onReceivedSfuMessage(const QString& message);
-
+  // As to join Room needs to get information from Webrtc, implement it in
+  // Controller.
   virtual void joinRoom() = 0;
   void seekParticipant(uint64_t offset);
   void limitParticipant(uint16_t bitrate);
   void leaveRoom();
   void publishStream(const std::string &sdp, bool camera);
   void unpublishStream(bool camera);
-
   void lastN(int n);
 
+  std::string getRoomId() const;
+  std::string getAnswerSdp() const;
+  std::string getRoomAccessPin() const;
   void setRoomId(std::string roomId_);
   void setRoomAccessPin(std::string pin);
 
+  virtual void Log(const std::string &msg) = 0;
+
+public Q_SLOTS:
+  void onReceivedSfuMessage(const QString& message);
+
 Q_SIGNALS:
-  /**
-   * @brief Signal used to get the status of the command
-   * @param cmdId Command ID
-   * @param result "OK" if command is successful. Or it is the error message
-   */
   void sendSfuLog(const QString &log);
   void streamPublishedEvent();
   void streamUnpublishedEvent(const std::string &streamId);
@@ -69,7 +65,8 @@ protected:
   SDPInfo::shared sdpInfo_;
   std::function<bool (const std::string&)> callback_ = nullptr;
 
-  virtual void onmessage(const std::function<bool(const std::string &message)> &callback) override;
+  // send will be overrided in Controller
+  virtual void onmessage(const std::function<bool(const std::string &message)> &callback) final;
 };
 
 #endif // QSFUSIGNALING_H
