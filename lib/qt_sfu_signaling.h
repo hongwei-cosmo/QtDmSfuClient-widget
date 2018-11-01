@@ -36,9 +36,8 @@ public Q_SLOTS:
   void seekParticipant(uint64_t offset);
   void limitParticipant(uint16_t bitrate);
   void leaveRoom();
-  void publishCamera(const StreamInfo::shared &streamInfo);
-  void publishDesktop(const StreamInfo::shared &streamInfo);
-  void unpublishStream();
+  void publishStream(const std::string &sdp, bool camera);
+  void unpublishStream(bool camera);
 
   void lastN(int n);
 
@@ -51,7 +50,7 @@ Q_SIGNALS:
    * @param cmdId Command ID
    * @param result "OK" if command is successful. Or it is the error message
    */
-  void sendSfuLog(const std::string &log);
+  void sendSfuLog(const QString &log);
   void streamPublishedEvent();
   void streamUnpublishedEvent(const std::string &streamId);
   void participantJoinedEvent(const std::string &roomId, const std::string &clientId, const std::string &reason);

@@ -22,7 +22,7 @@ DialogCreateRoom::~DialogCreateRoom()
 void DialogCreateRoom::on_buttonBox_accepted()
 {
   Controller *controller = ((MainWindow*)parentWidget())->controller();
-  if (!controller->connectedSfu()) {
+  if (controller->getState() == Controller::State::Disconnected) {
     qDebug("[%s] Not yet connected to SFU", __func__);
     return;
   }

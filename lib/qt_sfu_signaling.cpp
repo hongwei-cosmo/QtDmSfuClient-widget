@@ -1,7 +1,7 @@
 #include "qt_sfu_signaling.h"
 #include <QDebug>
 
-#define LOG Q_EMIT sendSfuLog
+#define LOG(s) Q_EMIT sendSfuLog(QString("[Signaling:%1] %2").arg(__LINE__).arg(QString::fromStdString(s)))
 
 QSfuSignaling::QSfuSignaling(QObject *parent) : QObject(parent)
 {
@@ -19,7 +19,7 @@ QSfuSignaling::QSfuSignaling(QObject *parent) : QObject(parent)
     Q_EMIT streamUnpublishedEvent(r.streamId);
   })
   .on<dm::Participant::Event::Joined>([=](dm::Participant::Event::Joined &r) {
-    LOG("Sfu event: Participant Joined");
+    LOG("Sfu event: New Participant Joined");
     Q_EMIT participantJoinedEvent(r.roomId, r.clientId, r.reason);
   })
   .on<dm::Participant::Event::Left>([=](dm::Participant::Event::Left &r) {
@@ -122,32 +122,28 @@ void QSfuSignaling::leaveRoom()
   });
 }
 
-void QSfuSignaling::publishCamera(const StreamInfo::shared &streamInfo)
+void QSfuSignaling::publishStream(const std::string &sdp, bool camera)
 {
   qDebug("[%s]", __func__);
-  sfu_->publish(roomId_, dm::StreamKind::Camera, "camera", streamInfo, [=](const dm::Stream::Published &published) {
+  std::string tag = camera ? "camera" : "desktop";
+  auto sdpInfo = SDPInfo::parse(sdp);
+  auto streamInfo = sdpInfo->getStream(tag);
+  sfu_->publish(roomId_, camera ? dm::StreamKind::Camera : dm::StreamKind::Desktop,
+                tag, streamInfo, [=](const dm::Stream::Published &published) {
     if (published.error) {
-      LOG("PublishCamera: Failed. Error: " + published.error->message);
+      LOG("PublishStream: Failed. Error: " + published.error->message);
     }
     Q_EMIT publishedStream((published.error?false:true));
   });
 }
 
-void QSfuSignaling::publishDesktop(const StreamInfo::shared &streamInfo)
+void QSfuSignaling::unpublishStream(bool camera)
 {
   qDebug("[%s]", __func__);
-  sfu_->publish(roomId_, dm::StreamKind::Desktop, "desktop", streamInfo, [=](const dm::Stream::Published &published) {
-    if (published.error) {
-      LOG("PublishCamera: Failed. Error: " + published.error->message);
-    }
-    Q_EMIT publishedStream(published.error?false:true);
+  std::string tag = camera ? "camera" : "desktop";
+  sfu_->unpublish(roomId_, tag, [=](const dm::Stream::Unpublished &unpublished) {
+
   });
-}
-
-void QSfuSignaling::unpublishStream()
-{
-  qDebug("[%s]", __func__);
-
 }
 
 void QSfuSignaling::lastN(int n)

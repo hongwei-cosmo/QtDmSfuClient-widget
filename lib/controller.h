@@ -15,10 +15,18 @@ class Controller : public QSfuSignaling
 {
   Q_OBJECT
 public:
+  enum class State {
+    Disconnected  = 0b0000,
+    Connected     = 0b0001,
+    Joined        = 0b0011,
+    Camera        = 0b0111,
+    Desktop       = 0b1011,
+  };
+
   explicit Controller(QObject *parent = nullptr);
   ~Controller();
-  bool connectedSfu() const;
-  void createOffer();
+  State getState() const;
+  void createOfferForJoinRoom();
   void publishCamera();
   void publishDesktop();
 
@@ -36,15 +44,18 @@ private Q_SLOTS:
   void onSslErrors(const QList<QSslError> &errors);
 
   void onSendMessgeToSfu(const std::string &message);
-  void onGotSfuLog(const std::string &log);
+  void onGotSfuLog(const QString &log);
   void onStreamPublished();
   void onStreamUnpublished(const std::string &streamId);
   void onParticipantJoined(const std::string &roomId, const std::string &clientId, const std::string &reason);
   void onParticipantLeft(const std::string &roomId, const std::string &clientId, const std::string &reason);
   void onParticipantKicked(const std::string &roomId, const std::string &reason);
   void onActiveSpeakerChanged(const std::string &roomId, const std::string &clientId);
+  void onPublishedStream(bool success);
 
-  void onCreatedOfferSuccess(const QJsonObject &sdp);
+  void onCreatedJoinRoomOfferSuccess(const QJsonObject &sdp);
+  void onCreatedPublishCameraOfferSuccess(const QJsonObject &sdp);
+  void onCreatedPublishDesktopOfferSuccess(const QJsonObject &sdp);
   void onGotICECandidate(const QJsonObject &candidate);
   void onAddedStream(MediaStreamProxy* stream);
   void onSetRemoteDescriptionSuccess();
@@ -56,8 +67,7 @@ private:
   QWebRTCProxy *webrtcProxy_;
   PeerConnectionProxy *peerConnection_;
   QWebSocket webSocket_;
-  bool connectedSfu_ = false;
-  bool joinedRoom_ = false;
+  State state = State::Disconnected;
 };
 
 #endif // CONTROLLER_H

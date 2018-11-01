@@ -84,7 +84,12 @@ set(uis
 set(resources
   main.qrc
   )
-add_executable(QtDmSfuClient ${sources} ${headers} ${uis} ${resources})
+add_executable(QtDmSfuClient MACOSX_BUNDLE ${sources} ${headers} ${uis} ${resources})
+if(APPLE)
+  set_target_properties(QtDmSfuClient PROPERTIES
+    MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/Info.plist"
+  )
+endif()
 target_compile_definitions(QtDmSfuClient PUBLIC QT_NO_KEYWORDS)
 target_link_libraries(QtDmSfuClient
   Qt5::Widgets
@@ -94,3 +99,4 @@ target_link_libraries(QtDmSfuClient
   ${QtWebrtc_LIBRARIES}
   dm-sfu-signaling::dm-sfu-signaling
   )
+
