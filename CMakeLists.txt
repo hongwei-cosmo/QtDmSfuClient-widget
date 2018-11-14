@@ -18,7 +18,7 @@ set(CMAKE_AUTORCC ON)
 find_package(libwebrtc REQUIRED)
 find_package(QtWebrtc  REQUIRED)
 find_package(dm-sfu-signaling REQUIRED)
-find_package(Qt5 COMPONENTS Quick Widgets WebSockets REQUIRED)
+find_package(Qt5 COMPONENTS Quick Widgets REQUIRED)
 
 if(WIN32)
   if(BUILD_SHARED_LIBS)
@@ -88,11 +88,20 @@ if(APPLE)
     MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/ui/Info.plist"
   )
 endif()
-target_compile_definitions(QtDmSfuClient PUBLIC QT_NO_KEYWORDS)
+target_compile_definitions(QtDmSfuClient PUBLIC
+  QT_NO_KEYWORDS
+  _WEBSOCKETPP_CPP11_STL_
+  ASIO_STANDALONE
+  )
 target_link_libraries(QtDmSfuClient
   Qt5::Widgets
   Qt5::Quick
-  Qt5::WebSockets
+  ${WEBRTC_LIBRARIES}
   ${QtWebrtc_LIBRARIES}
   dm-sfu-signaling::dm-sfu-signaling
+  )
+
+target_include_directories(QtDmSfuClient PUBLIC
+  external/websocketpp
+  external/asio/asio/include
   )

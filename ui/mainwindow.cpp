@@ -13,10 +13,10 @@
 
 MainWindow::MainWindow(QWidget *parent) :
   QMainWindow(parent),
-  ui(new Ui::MainWindow),
-  controller_(new Controller)
+  ui(new Ui::MainWindow)
 {
   ui->setupUi(this);
+  controller_ = new Controller();
   controller_->logger = [=](const std::string &log) {
     ui->logWindow->appendPlainText(QString::fromStdString(log));
   };

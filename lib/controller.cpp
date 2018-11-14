@@ -5,31 +5,54 @@
 
 #include <QDebug>
 
+using namespace nlohmann;
+
 Controller::Controller(QObject *parent) :
   QSfuSignaling(parent),
   webrtcProxy_(QWebRTCProxy::getInstance())
 {
-  QSslConfiguration sslConfiguration;
-  QFile certFile(QStringLiteral(":/certs/client.pem"));
-  QFile keyFile(QStringLiteral(":/certs/client.key"));
-  QFile caFile(QStringLiteral(":/certs/ca_server.pem"));
-  certFile.open(QIODevice::ReadOnly);
-  keyFile.open(QIODevice::ReadOnly);
-  caFile.open(QIODevice::ReadOnly);
-  QSslCertificate certificate(&certFile, QSsl::Pem);
-  QSslKey sslKey(&keyFile, QSsl::Rsa, QSsl::Pem);
-  QSslCertificate caCertificate(&caFile, QSsl::Pem);
-  certFile.close();
-  keyFile.close();
-  caFile.close();
-  sslConfiguration.setPeerVerifyMode(QSslSocket::VerifyNone);
-  sslConfiguration.setLocalCertificate(certificate);
-  auto caCerts = sslConfiguration.caCertificates();
-  caCerts.append(caCertificate);
-  sslConfiguration.setPrivateKey(sslKey);
-  sslConfiguration.setCaCertificates(caCerts);
-  sslConfiguration.setProtocol(QSsl::TlsV1_2);
-  webSocket_.setSslConfiguration(sslConfiguration);
+  // Set logging to be pretty verbose (everything except message payloads)
+  client.set_access_channels(websocketpp::log::alevel::all);
+  client.clear_access_channels(websocketpp::log::alevel::frame_payload);
+  client.set_error_channels(websocketpp::log::elevel::all);
+
+  // Initialize ASIO
+  client.init_asio();
+
+  // Register our tls hanlder
+  client.set_tls_init_handler([&](...) {
+    // Create context
+    auto ctx = websocketpp::lib::make_shared<asio::ssl::context>(asio::ssl::context::tlsv12_client);
+
+    try {
+      // Removes support for undesired TLS versions
+      ctx->set_options(asio::ssl::context::default_workarounds |
+        asio::ssl::context::no_sslv2 |
+        asio::ssl::context::no_sslv3 |
+        asio::ssl::context::no_tlsv1 |
+        asio::ssl::context::no_tlsv1_1 |
+        asio::ssl::context::single_dh_use);
+
+      //Try to setup certificate, do not use if not found
+      Log("Trying to load certificate...");
+      // Loads CA certs file used to verify peers (DM_SFU)
+      ctx->load_verify_file("C:/certs/ca_server.pem");
+      // Sets lists of of ciphers offered and accepted
+      SSL_CTX_set_cipher_list(ctx->native_handle(), "ECDHE-RSA-AES256-GCM-SHA384");
+      // Loads client certificate and private key
+      ctx->use_certificate_file("C:/certs/client.pem", asio::ssl::context::file_format::pem);
+      ctx->use_private_key_file("C:/certs/client.key", asio::ssl::context::file_format::pem);
+      // Activates verification mode and rejects unverified peers
+      ctx->set_verify_mode(asio::ssl::context::verify_peer
+                         | asio::ssl::context::verify_fail_if_no_peer_cert);
+
+    } catch (std::exception &e) {
+      Log("[EXCEPTION] ctx set_options:");
+      Log(e.what());
+      Log("Peer verification is diabled");
+    }
+    return ctx;
+  });
 
   connect(this, &QSfuSignaling::streamPublishedEvent, this, &Controller::onStreamPublished);
   connect(this, &QSfuSignaling::streamUnpublishedEvent, this, &Controller::onStreamUnpublished);
@@ -37,17 +60,19 @@ Controller::Controller(QObject *parent) :
   connect(this, &QSfuSignaling::participantLeftEvent, this, &Controller::onParticipantLeft);
   connect(this, &QSfuSignaling::participantKickedEvent, this, &Controller::onParticipantKicked);
   connect(this, &QSfuSignaling::activeSpeakerChangedEvent, this, &Controller::onActiveSpeakerChanged);
-  connect(&webSocket_, &QWebSocket::connected, this, &Controller::onConnectedSfu);
-  connect(&webSocket_, &QWebSocket::disconnected, this, &Controller::onDisconnectedSfu);
-  connect(&webSocket_, &QWebSocket::textMessageReceived, this, &Controller::onReceivedSfuMessage);
-  connect(&webSocket_, &QWebSocket::sslErrors, this, &Controller::onSslErrors);
-  connect(&webSocket_, &QWebSocket::stateChanged, this, &Controller::onStateChanged);
 
   peerConnection_ = webrtcProxy_->createPeerConnection();
 }
 
 Controller::~Controller() {
   delete webrtcProxy_;
+  //Stop client
+  client.stop();
+  //Clean thread
+  if (thread.joinable()) {
+    // Detach trhead
+    thread.detach();
+  }
 }
 
 Controller::State Controller::getState() const
@@ -55,18 +80,94 @@ Controller::State Controller::getState() const
   return state;
 }
 
-void Controller::connectSfu(const std::string& sfuUrl, const std::string& clientId)
+bool Controller::connectSfu(const std::string& sfuUrl, const std::string& clientId)
 {
   qDebug("[%s] url=%s, id=%s", __func__, sfuUrl.c_str(), clientId.c_str());
 
-  QString ws = QString::fromStdString(sfuUrl + "/?clientId=" + clientId);
-  webSocket_.open(QUrl(ws));
+  try {
+    std::string ws = sfuUrl + "/?clientId=" + clientId;
+    websocketpp::lib::error_code ec;
+
+    // Get new connection
+    connection = client.get_connection(ws, ec);
+    // Check error
+    if (ec) {
+      Log("get_connection failed. " + std::to_string(ec.value()) + ec.message());
+      return false;
+    }
+
+    // Register our message handler
+    connection->set_message_handler([&](websocketpp::connection_hdl con, websocketpp::config::asio_client::message_type::ptr frame) {
+      // Pass to the sfu client
+      this->callback_(frame->get_payload());
+    });
+
+    // Set close hanlder
+    connection->set_close_handler([&](...) {
+      // Call listener
+      Log("Connection close handler");
+      // Don't wait for connection close
+      thread.detach();
+      // Remove connection
+      connection = nullptr;
+    });
+
+    // Set failure handler
+    connection->set_fail_handler([&](...) {
+      // Call listener
+      Log("Connection fail handler");
+      // Don't wait for connection close
+      thread.detach();
+      // Remove connection
+      connection = nullptr;
+    });
+
+
+    connection->set_open_handler([=](websocketpp::connection_hdl con) {
+      // Launch event
+      Log("CONNECTED");
+    });
+
+    // Note that connect here only requests a connection. No network messages
+    // are exchanged until the event loop starts running in the next line.
+    client.connect(connection);
+
+    // Async
+    thread = std::thread([&]() {
+      //Run client async
+      client.run();
+    });
+
+  }
+  catch (websocketpp::exception const &e) {
+    Log("[EXCEPTION] connect:");
+    Log(e.what());
+    return false;
+  }
+
+  state = State::Connected;
+  return true;
 }
 
-void Controller::disconnectSfu()
+bool Controller::disconnectSfu()
 {
   qDebug("[%s]", __func__);
-  webSocket_.close();
+  if (state == State::Disconnected)
+    return true;
+
+  try {
+    Log("Disconnecting ...");
+    // Stop client
+    client.close(connection, websocketpp::close::status::normal, std::string("disconnect"));
+    connection = nullptr;
+    Log("DISCONNECTED");
+  } catch (websocketpp::exception const &e) {
+    Log("[EXCEPTION] close:");
+    Log(e.what());
+    return false;
+  }
+
+  return true;
 }
 
 void Controller::onConnectedSfu()
@@ -81,46 +182,15 @@ void Controller::onDisconnectedSfu()
   state = State::Disconnected;
 }
 
-void Controller::onStateChanged(QAbstractSocket::SocketState state)
-{
-  qDebug("[%s] state=%d", __func__, state);
-  switch (state) {
-    case QAbstractSocket::SocketState::UnconnectedState:
-      Log("WS:Unconnected");
-      break;
-    case QAbstractSocket::SocketState::HostLookupState:
-      Log("WS:HostLookup");
-      break;
-    case QAbstractSocket::SocketState::ConnectingState:
-      Log("WS:Connecting");
-      break;
-    case QAbstractSocket::SocketState::ConnectedState:
-      Log("WS:Connected");
-      break;
-    case QAbstractSocket::SocketState::BoundState:
-      Log("WS:Bound");
-      break;
-    case QAbstractSocket::SocketState::ListeningState:
-      Log("WS:Listening");
-      break;
-    case QAbstractSocket::SocketState::ClosingState:
-      Log("WS:Closing");
-      break;
-  }
-}
-
-void Controller::onSslErrors(const QList<QSslError> &errors)
-{
-  Log("Got ssl Errors:");
-  for (auto &e : errors) {
-    Log("\t" + e.errorString().toStdString());
-  }
-}
-
 void Controller::send(const std::string &message)
 {
   qDebug("[%s] msg=\"%s\"", __func__, message.c_str());
-  webSocket_.sendTextMessage(QString::fromStdString(message));
+  try {
+    // Send it
+    connection->send(message);
+  } catch (...) {
+    Log("[ERROR]Controller::send() exception");
+  }
 }
 
 void Controller::onStreamPublished()

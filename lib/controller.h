@@ -1,10 +1,13 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
+// Websocketpp
+#include "websocketpp/client.hpp"
+#include "websocketpp/config/asio_client.hpp"
+
 #include "qt_sfu_signaling.h"
 
 #include <QObject>
-#include <QWebSocket>
 #include <QJsonObject>
 
 class QWebRTCProxy;
@@ -35,14 +38,12 @@ public:
   virtual void Log(const std::string &log) final;
 
 public Q_SLOTS:
-  void connectSfu(const std::string &sfuUrl, const std::string &clientId);
-  void disconnectSfu();
+  bool connectSfu(const std::string &sfuUrl, const std::string &clientId);
+  bool disconnectSfu();
 
 private Q_SLOTS:
   void onConnectedSfu();
   void onDisconnectedSfu();
-  void onStateChanged(QAbstractSocket::SocketState state);
-  void onSslErrors(const QList<QSslError> &errors);
 
   void onStreamPublished();
   void onStreamUnpublished(const std::string &streamId);
@@ -63,7 +64,10 @@ private Q_SLOTS:
 private:
   QWebRTCProxy *webrtcProxy_;
   PeerConnectionProxy *peerConnection_;
-  QWebSocket webSocket_;
+  websocketpp::client<websocketpp::config::asio_tls_client> client;
+  websocketpp::client<websocketpp::config::asio_tls_client>::connection_ptr connection;
+  std::thread thread;
+
   State state = State::Disconnected;
 };
 

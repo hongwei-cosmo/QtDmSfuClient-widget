@@ -166,7 +166,7 @@ std::string QSfuSignaling::getRoomId() const
   return roomId_;
 }
 
-void QSfuSignaling::setRoomAccessPin(std::string pin)
+void QSfuSignaling::setRoomAccessPin(const std::string& pin)
 {
   qDebug("[%s]", __func__);
   roomAccessPin_ = pin;

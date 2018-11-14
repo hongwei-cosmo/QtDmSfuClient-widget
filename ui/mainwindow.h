@@ -60,8 +60,8 @@ private Q_SLOTS:
   void on_actionSaveLog_triggered();
 
 private:
-  Ui::MainWindow *ui;
-  Controller *controller_;
+  Ui::MainWindow *ui = nullptr;
+  Controller *controller_ = nullptr;
 };
 
 #endif // MAINWINDOW_H

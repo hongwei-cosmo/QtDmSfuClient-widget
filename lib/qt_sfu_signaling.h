@@ -38,7 +38,7 @@ public:
   std::string getAnswerSdp() const;
   std::string getRoomAccessPin() const;
   void setRoomId(std::string roomId_);
-  void setRoomAccessPin(std::string pin);
+  void setRoomAccessPin(const std::string& pin);
 
   virtual void Log(const std::string &msg) = 0;
 
