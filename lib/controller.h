@@ -42,9 +42,6 @@ public Q_SLOTS:
   bool disconnectSfu();
 
 private Q_SLOTS:
-  void onConnectedSfu();
-  void onDisconnectedSfu();
-
   void onStreamPublished();
   void onStreamUnpublished(const std::string &streamId);
   void onParticipantJoined(const std::string &roomId, const std::string &clientId, const std::string &reason);

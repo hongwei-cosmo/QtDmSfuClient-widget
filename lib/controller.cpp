@@ -26,12 +26,12 @@ Controller::Controller(QObject *parent) :
 
     try {
       // Removes support for undesired TLS versions
-      ctx->set_options(asio::ssl::context::default_workarounds |
-        asio::ssl::context::no_sslv2 |
-        asio::ssl::context::no_sslv3 |
-        asio::ssl::context::no_tlsv1 |
-        asio::ssl::context::no_tlsv1_1 |
-        asio::ssl::context::single_dh_use);
+      ctx->set_options(asio::ssl::context::default_workarounds
+                       | asio::ssl::context::no_sslv2
+                       | asio::ssl::context::no_sslv3
+                       | asio::ssl::context::no_tlsv1
+                       | asio::ssl::context::no_tlsv1_1
+                       | asio::ssl::context::single_dh_use);
 
       //Try to setup certificate, do not use if not found
       Log("Trying to load certificate...");
@@ -44,7 +44,7 @@ Controller::Controller(QObject *parent) :
       ctx->use_private_key_file("C:/certs/client.key", asio::ssl::context::file_format::pem);
       // Activates verification mode and rejects unverified peers
       ctx->set_verify_mode(asio::ssl::context::verify_peer
-                         | asio::ssl::context::verify_fail_if_no_peer_cert);
+                           | asio::ssl::context::verify_fail_if_no_peer_cert);
 
     } catch (std::exception &e) {
       Log("[EXCEPTION] ctx set_options:");
@@ -97,15 +97,17 @@ bool Controller::connectSfu(const std::string& sfuUrl, const std::string& client
     }
 
     // Register our message handler
-    connection->set_message_handler([&](websocketpp::connection_hdl con, websocketpp::config::asio_client::message_type::ptr frame) {
+    connection->set_message_handler([&](websocketpp::connection_hdl con,
+                websocketpp::config::asio_client::message_type::ptr frame) {
       // Pass to the sfu client
+      Log("Frame: " + frame->get_payload());
       this->callback_(frame->get_payload());
     });
 
     // Set close hanlder
     connection->set_close_handler([&](...) {
       // Call listener
-      Log("Connection close handler");
+      Log("Connection is closed");
       // Don't wait for connection close
       thread.detach();
       // Remove connection
@@ -115,7 +117,7 @@ bool Controller::connectSfu(const std::string& sfuUrl, const std::string& client
     // Set failure handler
     connection->set_fail_handler([&](...) {
       // Call listener
-      Log("Connection fail handler");
+      Log("Connection is failed");
       // Don't wait for connection close
       thread.detach();
       // Remove connection
@@ -125,7 +127,7 @@ bool Controller::connectSfu(const std::string& sfuUrl, const std::string& client
 
     connection->set_open_handler([=](websocketpp::connection_hdl con) {
       // Launch event
-      Log("CONNECTED");
+      Log("Connection is opened");
     });
 
     // Note that connect here only requests a connection. No network messages
@@ -138,8 +140,7 @@ bool Controller::connectSfu(const std::string& sfuUrl, const std::string& client
       client.run();
     });
 
-  }
-  catch (websocketpp::exception const &e) {
+  } catch (websocketpp::exception const &e) {
     Log("[EXCEPTION] connect:");
     Log(e.what());
     return false;
@@ -160,7 +161,6 @@ bool Controller::disconnectSfu()
     // Stop client
     client.close(connection, websocketpp::close::status::normal, std::string("disconnect"));
     connection = nullptr;
-    Log("DISCONNECTED");
   } catch (websocketpp::exception const &e) {
     Log("[EXCEPTION] close:");
     Log(e.what());
@@ -168,18 +168,6 @@ bool Controller::disconnectSfu()
   }
 
   return true;
-}
-
-void Controller::onConnectedSfu()
-{
-  Log("Successfully connect to SFU");
-  state = State::Connected;
-}
-
-void Controller::onDisconnectedSfu()
-{
-  qDebug("[%s]", __func__);
-  state = State::Disconnected;
 }
 
 void Controller::send(const std::string &message)
@@ -256,6 +244,7 @@ void Controller::publishDesktop()
 
 void Controller::Log(const std::string &log)
 {
+  qDebug("%s", log.c_str());
   if (logger) logger(log);
 }
 

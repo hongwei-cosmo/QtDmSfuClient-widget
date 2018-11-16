@@ -9,7 +9,7 @@ DialogConnetSfu::DialogConnetSfu(QWidget *parent) :
 {
   auto id = QRandomGenerator::global()->generate();
   ui->setupUi(this);
-  ui->lineEdit_SfuURL->setText("wss://192.168.2.2:9443");
+  ui->lineEdit_SfuURL->setText("wss://192.168.1.160:9443");
   ui->lineEdit_ClientID->setText(QStringLiteral("Client%1").arg(id));
 }
 
