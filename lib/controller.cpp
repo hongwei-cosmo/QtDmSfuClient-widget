@@ -234,6 +234,7 @@ void Controller::publishDesktop()
 
 void Controller::Log(const std::string &log)
 {
+  qDebug("[Log: %s]", log.c_str());
   if (logger) logger(log);
 }
 
