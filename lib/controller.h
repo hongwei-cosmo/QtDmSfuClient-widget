@@ -10,10 +10,6 @@
 #include <QObject>
 #include <QJsonObject>
 
-class QWebRTCProxy;
-class MediaStreamProxy;
-class PeerConnectionProxy;
-
 class Controller : public QSfuSignaling
 {
   Q_OBJECT
@@ -57,13 +53,10 @@ private Q_SLOTS:
   void onCreatedPublishCameraOfferSuccess(const QJsonObject &sdp);
   void onCreatedPublishDesktopOfferSuccess(const QJsonObject &sdp);
   void onGotICECandidate(const QJsonObject &candidate);
-  void onAddedStream(MediaStreamProxy* stream);
   void onSetRemoteDescriptionSuccess();
   void onCreatedAnswerSuccess(const QJsonObject &sdp);
 
 private:
-  QWebRTCProxy *webrtcProxy_;
-  PeerConnectionProxy *peerConnection_;
   websocketpp::client<websocketpp::config::asio_tls_client> client;
   websocketpp::client<websocketpp::config::asio_tls_client>::connection_ptr connection;
   std::thread thread;

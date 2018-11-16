@@ -1,70 +1,20 @@
 cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR)
 project(QtDmSfuClient)
 
-set(BUILD_SHARED_LIBS True)
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTORCC ON)
-
-#if(WIN32)
-#  # Custom source list for Windows Desktop
-#  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
-#  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
-#endif()
 
 find_package(libwebrtc REQUIRED)
-find_package(QtWebrtc  REQUIRED)
 find_package(dm-sfu-signaling REQUIRED)
-find_package(Qt5 COMPONENTS Quick Widgets REQUIRED)
-
-if(WIN32)
-  if(BUILD_SHARED_LIBS)
-    if(QtWebrtc_EXPORT_LIB)
-      set(QtWebrtc_LIBRARIES ${QtWebrtc_EXPORT_LIB})
-    else()
-      message(ERROR "You want a shared build, but I don't have QtWebrtc Export lib.")
-    endif()
-  else()
-    if(QtWebrtc_STATIC_LIB)
-      set(QtWebrtc_LIBRARIES ${QtWebrtc_STATIC_LIB})
-    else()
-      message(ERROR "You want a static build, but I don't have QtWebrtc static lib.")
-    endif()
-  endif()
-else(UNIX)
-  message(STATUS ${QtWebrtc_SHARED_LIB})
-  message(STATUS ${QtWebrtc_STATIC_LIB})
-  if(BUILD_SHARED_LIBS)
-    if(QtWebrtc_SHARED_LIB)
-      set(QtWebrtc_LIBRARIES ${QtWebrtc_SHARED_LIB})
-    else()
-      message(ERROR "You want a shared build, but i don't have QtWebrtc shared lib.")
-    endif()
-  else()
-    if(QtWebrtc_STATIC_LIB)
-      set(QtWebrtc_LIBRARIES ${QtWebrtc_STATIC_LIB})
-    else()
-      message(ERROR "You want a static build, but i don't have QtWebrtc static lib.")
-    endif()
-  endif()
-endif()
+find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
 set(lib
   lib/controller.cpp
   lib/qt_sfu_signaling.cpp
-  lib/controller.h
-  lib/qt_sfu_signaling.h
   )
 set(ui
-  ui/mainwindow.h
-  ui/dialogconnetsfu.h
-  ui/dialogcreateroom.h
-  ui/dialogparticipant.h
-  ui/dialogseek.h
-  ui/dialoglimit.h
   ui/mainwindow.cpp
   ui/main.cpp
   ui/dialogconnetsfu.cpp
@@ -95,9 +45,7 @@ target_compile_definitions(QtDmSfuClient PUBLIC
   )
 target_link_libraries(QtDmSfuClient
   Qt5::Widgets
-  Qt5::Quick
   ${WEBRTC_LIBRARIES}
-  ${QtWebrtc_LIBRARIES}
   dm-sfu-signaling::dm-sfu-signaling
   )
 

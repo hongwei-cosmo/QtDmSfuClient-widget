@@ -1,6 +1,3 @@
-#include "moc_deps.h"
-#include "QWebRTCProxy.h"
-#include "MediaStreamProxy.h"
 #include "controller.h"
 
 #include <QDebug>
@@ -8,8 +5,7 @@
 using namespace nlohmann;
 
 Controller::Controller(QObject *parent) :
-  QSfuSignaling(parent),
-  webrtcProxy_(QWebRTCProxy::getInstance())
+  QSfuSignaling(parent)
 {
   // Set logging to be pretty verbose (everything except message payloads)
   client.set_access_channels(websocketpp::log::alevel::all);
@@ -60,12 +56,9 @@ Controller::Controller(QObject *parent) :
   connect(this, &QSfuSignaling::participantLeftEvent, this, &Controller::onParticipantLeft);
   connect(this, &QSfuSignaling::participantKickedEvent, this, &Controller::onParticipantKicked);
   connect(this, &QSfuSignaling::activeSpeakerChangedEvent, this, &Controller::onActiveSpeakerChanged);
-
-  peerConnection_ = webrtcProxy_->createPeerConnection();
 }
 
 Controller::~Controller() {
-  delete webrtcProxy_;
   //Stop client
   client.stop();
   //Clean thread
@@ -226,27 +219,12 @@ void Controller::onPublishedStream(bool success)
 
 void Controller::joinRoom()
 {
-  peerConnection_->disconnect(SIGNAL(oncreateoffersuccess));
-  connect(peerConnection_, &PeerConnectionProxy::oncreateoffersuccess,
-          this, &Controller::onCreatedJoinRoomOfferSuccess);
-  peerConnection_->createOffer();
+  qDebug("[%s]", __func__);
 }
 
 void Controller::publishCamera()
 {
-  state = State::Camera;
-  auto videoTrack = webrtcProxy_->createVideoCapturer()->getVideoTrack();
-  auto audioTrack = webrtcProxy_->createAudioCapturer()->getAudioTrack();
-
-  auto stream = webrtcProxy_->createLocalStream("camera");
-  stream->addTrack(videoTrack);
-  stream->addTrack(audioTrack);
-  peerConnection_->addStream(stream);
-  // TODO: render stream
-  peerConnection_->disconnect(SIGNAL(oncreateoffersuccess));
-  connect(peerConnection_, &PeerConnectionProxy::oncreateoffersuccess,
-          this, &Controller::onCreatedPublishCameraOfferSuccess);
-  peerConnection_->createOffer();
+  qDebug("[%s]", __func__);
 }
 
 void Controller::publishDesktop()
@@ -262,54 +240,19 @@ void Controller::Log(const std::string &log)
 void Controller::onCreatedJoinRoomOfferSuccess(const QJsonObject &sdp)
 {
   qDebug("[%s]", __func__);
-  peerConnection_->setLocalDescription(sdp);
-  std::string sdp_ = sdp.value("sdp").toString().toStdString();
-  auto offerInfo = SDPInfo::parse(sdp_);
-  sfu_->join(roomId_, roomAccessPin_, offerInfo,
-                  [this](const dm::Participant::Joined &r) {
-    if (!r.error) {
-      sdpInfo_ = r.result->sdpInfo;
-      for (auto stream : r.result->streams) {
-        sdpInfo_->addStream(stream);
-      }
-
-      QJsonObject desc;
-      desc["type"] = QString("answer");
-      desc["sdp"]  = QString::fromStdString(sdpInfo_->toString());
-      peerConnection_->setRemoteDescription(desc);
-
-      // FIXME: crash on mac
-//      std::vector<dm::VideoProfile> profiles = {
-//          {"camera", dm::LayerTraversalAlgorithm::ZigZagSpatialTemporal},
-//          {"screenshare", dm::LayerTraversalAlgorithm::SpatialTemporal},
-//      };
-//      sfu_->setProfiles(roomId_, profiles, [](...){
-//          Log("Profiles set");
-//      });
-    }
-    Log("Join Room " + r.toString());
-  });
 }
 
 void Controller::onCreatedPublishCameraOfferSuccess(const QJsonObject &sdp)
 {
   qDebug("[%s]", __func__);
-  peerConnection_->setLocalDescription(sdp);
-  std::string sdp_ = sdp.value("sdp").toString().toStdString();
-  connect(this, &QSfuSignaling::publishedStream, this, &Controller::onPublishedStream);
-  publishStream(sdp_, state == State::Camera ? true : false);
 }
 
 void Controller::onCreatedPublishDesktopOfferSuccess(const QJsonObject &sdp)
 {
-
+  qDebug("[%s]", __func__);
 }
 
 void Controller::onGotICECandidate(const QJsonObject &candidate)
-{
-  qDebug("[%s]", __func__);
-}
-void Controller::onAddedStream(MediaStreamProxy* stream)
 {
   qDebug("[%s]", __func__);
 }
