@@ -1,6 +1,9 @@
 #include "controller.h"
 
 #include <QDebug>
+#include <QImage>
+#include <QPainter>
+#include <QLabel>
 
 using namespace nlohmann;
 
@@ -8,15 +11,15 @@ Controller::Controller(QObject *parent) :
   QSfuSignaling(parent)
 {
   // Set logging to be pretty verbose (everything except message payloads)
-  client.set_access_channels(websocketpp::log::alevel::all);
-  client.clear_access_channels(websocketpp::log::alevel::frame_payload);
-  client.set_error_channels(websocketpp::log::elevel::all);
+  client_.set_access_channels(websocketpp::log::alevel::all);
+  client_.clear_access_channels(websocketpp::log::alevel::frame_payload);
+  client_.set_error_channels(websocketpp::log::elevel::all);
 
   // Initialize ASIO
-  client.init_asio();
+  client_.init_asio();
 
   // Register our tls hanlder
-  client.set_tls_init_handler([&](...) {
+  client_.set_tls_init_handler([&](...) {
     // Create context
     auto ctx = websocketpp::lib::make_shared<asio::ssl::context>(asio::ssl::context::tlsv12_client);
 
@@ -30,7 +33,7 @@ Controller::Controller(QObject *parent) :
         asio::ssl::context::single_dh_use);
 
       //Try to setup certificate, do not use if not found
-      Log("Trying to load certificate...");
+      qDebug("Trying to load certificate...");
       // Loads CA certs file used to verify peers (DM_SFU)
       ctx->load_verify_file("C:/certs/ca_server.pem");
       // Sets lists of of ciphers offered and accepted
@@ -39,13 +42,15 @@ Controller::Controller(QObject *parent) :
       ctx->use_certificate_file("C:/certs/client.pem", asio::ssl::context::file_format::pem);
       ctx->use_private_key_file("C:/certs/client.key", asio::ssl::context::file_format::pem);
       // Activates verification mode and rejects unverified peers
-      ctx->set_verify_mode(asio::ssl::context::verify_peer
-                         | asio::ssl::context::verify_fail_if_no_peer_cert);
+//      ctx->set_verify_mode(asio::ssl::context::verify_peer
+//                         | asio::ssl::context::verify_fail_if_no_peer_cert);
+      // TODO: enable ssl verify
+      ctx->set_verify_mode(asio::ssl::context::verify_none);
 
     } catch (std::exception &e) {
-      Log("[EXCEPTION] ctx set_options:");
-      Log(e.what());
-      Log("Peer verification is diabled");
+      qDebug("[EXCEPTION] ctx set_options:");
+      qDebug(e.what());
+      qDebug("Peer verification is diabled");
     }
     return ctx;
   });
@@ -56,16 +61,23 @@ Controller::Controller(QObject *parent) :
   connect(this, &QSfuSignaling::participantLeftEvent, this, &Controller::onParticipantLeft);
   connect(this, &QSfuSignaling::participantKickedEvent, this, &Controller::onParticipantKicked);
   connect(this, &QSfuSignaling::activeSpeakerChangedEvent, this, &Controller::onActiveSpeakerChanged);
+
+  pc_ = new rtc::RefCountedObject<DMPeerConnection>();
+  if (!pc_->InitializePeerConnection(nullptr, 0, nullptr, nullptr, true)) {
+    Log("Initialize Peer Conection Failed");
+  }
 }
 
 Controller::~Controller() {
   //Stop client
-  client.stop();
+  client_.stop();
   //Clean thread
-  if (thread.joinable()) {
+  if (thread_.joinable()) {
     // Detach trhead
-    thread.detach();
+    thread_.detach();
   }
+
+  pc_->DeletePeerConnection();
 }
 
 Controller::State Controller::getState() const
@@ -82,7 +94,7 @@ bool Controller::connectSfu(const std::string& sfuUrl, const std::string& client
     websocketpp::lib::error_code ec;
 
     // Get new connection
-    connection = client.get_connection(ws, ec);
+    connection_ = client_.get_connection(ws, ec);
     // Check error
     if (ec) {
       Log("get_connection failed. " + std::to_string(ec.value()) + ec.message());
@@ -90,47 +102,48 @@ bool Controller::connectSfu(const std::string& sfuUrl, const std::string& client
     }
 
     // Register our message handler
-    connection->set_message_handler([&](websocketpp::connection_hdl con, websocketpp::config::asio_client::message_type::ptr frame) {
+    connection_->set_message_handler([&](websocketpp::connection_hdl con, websocketpp::config::asio_client::message_type::ptr frame) {
       // Pass to the sfu client
       this->callback_(frame->get_payload());
     });
 
     // Set close hanlder
-    connection->set_close_handler([&](...) {
+    connection_->set_close_handler([&](...) {
       // Call listener
-      Log("Connection close handler");
+      qDebug("Connection close handler");
       // Don't wait for connection close
-      thread.detach();
+      thread_.detach();
       // Remove connection
-      connection = nullptr;
+      connection_ = nullptr;
     });
 
     // Set failure handler
-    connection->set_fail_handler([&](...) {
+    connection_->set_fail_handler([&](...) {
       // Call listener
-      Log("Connection fail handler");
+      qDebug("Connection fail handler");
       // Don't wait for connection close
-      thread.detach();
+      thread_.detach();
       // Remove connection
-      connection = nullptr;
+      connection_ = nullptr;
     });
 
 
-    connection->set_open_handler([=](websocketpp::connection_hdl con) {
+    connection_->set_open_handler([=](websocketpp::connection_hdl con) {
       // Launch event
-      Log("CONNECTED");
+      qDebug("CONNECTED");
     });
 
     // Note that connect here only requests a connection. No network messages
     // are exchanged until the event loop starts running in the next line.
-    client.connect(connection);
+    client_.connect(connection_);
 
     // Async
-    thread = std::thread([&]() {
+    // NOTE: all websocketpp handlers run in the thread.
+    // So can't call Log in this handlers, Log isn't thread safe.
+    thread_ = std::thread([&]() {
       //Run client async
-      client.run();
+      client_.run();
     });
-
   }
   catch (websocketpp::exception const &e) {
     Log("[EXCEPTION] connect:");
@@ -151,8 +164,8 @@ bool Controller::disconnectSfu()
   try {
     Log("Disconnecting ...");
     // Stop client
-    client.close(connection, websocketpp::close::status::normal, std::string("disconnect"));
-    connection = nullptr;
+    client_.close(connection_, websocketpp::close::status::normal, std::string("disconnect"));
+    connection_ = nullptr;
     Log("DISCONNECTED");
   } catch (websocketpp::exception const &e) {
     Log("[EXCEPTION] close:");
@@ -180,7 +193,7 @@ void Controller::send(const std::string &message)
   qDebug("[%s] msg=\"%s\"", __func__, message.c_str());
   try {
     // Send it
-    connection->send(message);
+    connection_->send(message);
   } catch (...) {
     Log("[ERROR]Controller::send() exception");
   }
@@ -220,11 +233,55 @@ void Controller::onPublishedStream(bool success)
 void Controller::joinRoom()
 {
   qDebug("[%s]", __func__);
+
+  if (state == State::Joined) {
+    Log("Error: Already joined");
+    return;
+  }
+
+  pc_->RegisterOnLocalSdpReadytoSend([this](const char*type, const char* sdp) {
+     // join
+    sfu_->join(roomId_, roomAccessPin_, SDPInfo::parse(sdp), [this](const dm::Participant::Joined &joined) {
+      if (joined.error) {
+        Log("Error: Join Room Failed");
+        return;
+      }
+
+      auto answserInfo = joined.result->sdpInfo;
+      for(auto stream : joined.result->streams) {
+        answserInfo->addStream(stream);
+      }
+
+      if (!pc_->SetRemoteDescription("answer", answserInfo->toString().c_str())) {
+        Log("Error: Set Remote Description Failed");
+        return;
+      }
+
+      // TODO: Set profiles
+//      std::vector<dm::VideoProfile> profiles = {
+//        {"camera"	, dm::LayerTraversalAlgorithm::ZigZagSpatialTemporal},
+//        {"screenshare"	, dm::LayerTraversalAlgorithm::SpatialTemporal}
+//      };
+    });
+
+  });
+  pc_->CreateOffer();
 }
 
 void Controller::publishCamera()
 {
   qDebug("[%s]", __func__);
+  QPainter painter;
+  static int cnt = 0;
+  pc_->RegisterOnLocalI420FrameReady([&](
+                           const uint8_t* data_y, const uint8_t* data_u,
+                           const uint8_t* data_v, const uint8_t* data_a,
+                           int stride_y, int stride_u, int stride_v,
+                           int stride_a, uint32_t width, uint32_t height) {
+    qDebug("Frame %d", cnt++);
+
+  });
+  pc_->AddStreams(false);
 }
 
 void Controller::publishDesktop()
@@ -232,10 +289,13 @@ void Controller::publishDesktop()
   state = State::Desktop;
 }
 
+// Note: this function can only be called in functions of Qbject class
 void Controller::Log(const std::string &log)
 {
   qDebug("[Log: %s]", log.c_str());
-  if (logger) logger(log);
+  if (logger) {
+    logger(log);
+  }
 }
 
 void Controller::onCreatedJoinRoomOfferSuccess(const QJsonObject &sdp)
@@ -256,6 +316,7 @@ void Controller::onCreatedPublishDesktopOfferSuccess(const QJsonObject &sdp)
 void Controller::onGotICECandidate(const QJsonObject &candidate)
 {
   qDebug("[%s]", __func__);
+  Q_UNUSED(candidate);
 }
 void Controller::onSetRemoteDescriptionSuccess()
 {
@@ -264,4 +325,9 @@ void Controller::onSetRemoteDescriptionSuccess()
 void Controller::onCreatedAnswerSuccess(const QJsonObject &sdp)
 {
   qDebug("[%s]", __func__);
+  Q_UNUSED(sdp);
+}
+
+void Controller::sendLocalSdp(const char* type, const char* sdp) {
+
 }

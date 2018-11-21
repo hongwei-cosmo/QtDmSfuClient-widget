@@ -4,8 +4,8 @@
 // Websocketpp
 #include "websocketpp/client.hpp"
 #include "websocketpp/config/asio_client.hpp"
-
 #include "qt_sfu_signaling.h"
+#include "dm_peer_connection.h"
 
 #include <QObject>
 #include <QJsonObject>
@@ -57,11 +57,14 @@ private Q_SLOTS:
   void onCreatedAnswerSuccess(const QJsonObject &sdp);
 
 private:
-  websocketpp::client<websocketpp::config::asio_tls_client> client;
-  websocketpp::client<websocketpp::config::asio_tls_client>::connection_ptr connection;
-  std::thread thread;
+  websocketpp::client<websocketpp::config::asio_tls_client> client_;
+  websocketpp::client<websocketpp::config::asio_tls_client>::connection_ptr connection_;
+  std::thread thread_;
+  rtc::scoped_refptr<DMPeerConnection> pc_;
 
   State state = State::Disconnected;
+
+  void sendLocalSdp(const char* type, const char* sdp);
 };
 
 #endif // CONTROLLER_H

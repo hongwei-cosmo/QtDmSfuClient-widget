@@ -38,6 +38,9 @@ CONFIG += no_keywords
 SOURCES += \
         lib/controller.cpp \
         lib/qt_sfu_signaling.cpp \
+        lib/dm_peer_connection.cpp \
+        lib/dm_video_observer.cpp \
+        lib/ChecksumMediaCrypto.cpp \
         ui/main.cpp \
         ui/mainwindow.cpp \
         ui/dialogconnetsfu.cpp \
@@ -46,18 +49,23 @@ SOURCES += \
         ui/dialogparticipant.cpp \
         ui/dialogseek.cpp \
         ui/main.cpp \
-        ui/mainwindow.cpp
+        ui/mainwindow.cpp \
+    videorender.cpp
 
 HEADERS += \
         lib/controller.h \
         lib/qt_sfu_signaling.h \
+        lib/dm_peer_connection.h \
+        lib/dm_video_observer.h \
+        lib/ChecksumMediaCrypto.h \
         ui/mainwindow.h \
         ui/dialogconnetsfu.h \
         ui/dialogcreateroom.h \
         ui/dialoglimit.h \
         ui/dialogparticipant.h \
         ui/dialogseek.h \
-        ui/mainwindow.h
+        ui/mainwindow.h \
+    videorender.h
 
 FORMS += \
         ui/mainwindow.ui \
@@ -85,8 +93,6 @@ win32 {
   LIBS += -lDXGI
 }
 LIBS += -L$$COSMOROOT/dm-sfu-signaling/lib/ -ldm-sfu-signaling -lsfu-sdp -ltransaction-manager
-message("LIBS:")
-message($$LIBS)
 
 INCLUDEPATH += $$COSMOROOT/libwebrtc/include
 INCLUDEPATH += $$COSMOROOT/libwebrtc/include/third_party
