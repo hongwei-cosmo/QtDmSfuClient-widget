@@ -16,10 +16,10 @@ MainWindow::MainWindow(QWidget *parent) :
   ui(new Ui::MainWindow)
 {
   ui->setupUi(this);
-  controller_ = new Controller();
-  controller_->logger = [=](const std::string &log) {
-    ui->logWindow->appendPlainText(QString::fromStdString(log));
-  };
+  localFrame_ = new FrameWidget();
+  localFrame_->resize({640, 480});
+  ui->videoLayout->addWidget(localFrame_);
+  controller_ = new Controller(this);
 }
 
 MainWindow::~MainWindow()
@@ -27,6 +27,11 @@ MainWindow::~MainWindow()
   qDebug("[%s]", __func__);
   delete ui;
   delete controller_;
+}
+
+FrameWidget *MainWindow::getLocalFrame()
+{
+  return localFrame_;
 }
 
 Controller *MainWindow::controller() const
@@ -134,20 +139,9 @@ void MainWindow::on_actionLastAll_triggered()
 
 void MainWindow::on_actionClearLog_triggered()
 {
-  ui->logWindow->clear();
 }
 
 void MainWindow::on_actionSaveLog_triggered()
 {
-    auto save = QFileDialog::getSaveFileName(this, tr("Save Log"),
-      QDir::currentPath().append("/log.txt"), tr("txt"));
-    QFile f(save);
-    if (f.open(QIODevice::WriteOnly)) {
-      QTextStream s(&f);
-      s << ui->logWindow->toPlainText();
-      f.flush();
-      f.close();
-    }
-
-    QDesktopServices::openUrl(QUrl("file://" + save));
 }
+

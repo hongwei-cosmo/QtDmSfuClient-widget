@@ -1,4 +1,4 @@
-#include "controller.h"
+#include "ui/mainwindow.h"
 
 #include <QDebug>
 #include <QImage>
@@ -7,8 +7,8 @@
 
 using namespace nlohmann;
 
-Controller::Controller(QObject *parent) :
-  QSfuSignaling(parent)
+Controller::Controller(QWidget *mainWindow, QObject *parent) :
+  QSfuSignaling(parent), mainWindow_(mainWindow)
 {
   // Set logging to be pretty verbose (everything except message payloads)
   client_.set_access_channels(websocketpp::log::alevel::all);
@@ -271,14 +271,11 @@ void Controller::joinRoom()
 void Controller::publishCamera()
 {
   qDebug("[%s]", __func__);
-  QPainter painter;
-  static int cnt = 0;
-  pc_->RegisterOnLocalI420FrameReady([&](
-                           const uint8_t* data_y, const uint8_t* data_u,
-                           const uint8_t* data_v, const uint8_t* data_a,
-                           int stride_y, int stride_u, int stride_v,
-                           int stride_a, uint32_t width, uint32_t height) {
-    qDebug("Frame %d", cnt++);
+  pc_->RegisterOnLocalI420FrameReady([&](const uint8_t* buffer,
+                                     int width, int height) {
+    qDebug("Image %d, %d", width, height);
+    QImage image(buffer, width, height, QImage::Format::Format_ARGB32);
+    dynamic_cast<MainWindow*>(mainWindow_)->getLocalFrame()->drawImage(image);
 
   });
   pc_->AddStreams(false);
@@ -293,9 +290,7 @@ void Controller::publishDesktop()
 void Controller::Log(const std::string &log)
 {
   qDebug("[Log: %s]", log.c_str());
-  if (logger) {
-    logger(log);
-  }
+//  if (logger) logger(log);
 }
 
 void Controller::onCreatedJoinRoomOfferSuccess(const QJsonObject &sdp)

@@ -9,6 +9,7 @@
  */
 
 #include "dm_video_observer.h"
+#include "common_video/libyuv/include/webrtc_libyuv.h"
 
 void VideoObserver::SetVideoCallback(I420FrameReady_callback callback) {
   std::lock_guard<std::mutex> lock(mutex);
@@ -20,6 +21,18 @@ void VideoObserver::OnFrame(const webrtc::VideoFrame& frame) {
   if (!OnI420FrameReady)
     return;
 
+  if ((frame.width() != width_) || (frame.height() != height_)) {
+    width_ = frame.width();
+    height_ = frame.height();
+    buffer_size_ = width_ * height_ * 4; //BGRA
+    delete[] buffer_;
+    buffer_ = new uint8_t[buffer_size_];
+  }
+
+  webrtc::ConvertFromI420(frame, webrtc::VideoType::kARGB, 0, buffer_);
+  OnI420FrameReady(buffer_, width_, height_);
+
+  /*
   rtc::scoped_refptr<webrtc::VideoFrameBuffer> buffer(
       frame.video_frame_buffer());
 
@@ -41,4 +54,5 @@ void VideoObserver::OnFrame(const webrtc::VideoFrame& frame) {
                      i420a_buffer->StrideV(), i420a_buffer->StrideA(),
                      frame.width(), frame.height());
   }
+  */
 }

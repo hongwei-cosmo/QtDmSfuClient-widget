@@ -22,7 +22,7 @@ public:
     Desktop       = 0b1011,
   };
 
-  explicit Controller(QObject *parent = nullptr);
+  explicit Controller(QWidget *mainWindow, QObject *parent = nullptr);
   ~Controller();
   State getState() const;
   virtual void joinRoom() final;
@@ -61,6 +61,7 @@ private:
   websocketpp::client<websocketpp::config::asio_tls_client>::connection_ptr connection_;
   std::thread thread_;
   rtc::scoped_refptr<DMPeerConnection> pc_;
+  QWidget *mainWindow_ = nullptr;
 
   State state = State::Disconnected;
 

@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include "lib/controller.h"
+#include "lib/frame_widget.h"
 #include <QMainWindow>
 
 namespace Ui {
@@ -15,6 +16,8 @@ class MainWindow : public QMainWindow
 public:
   explicit MainWindow(QWidget *parent = nullptr);
   ~MainWindow();
+
+  FrameWidget *getLocalFrame();
 
   Controller* controller() const;
 
@@ -62,6 +65,7 @@ private Q_SLOTS:
 private:
   Ui::MainWindow *ui = nullptr;
   Controller *controller_ = nullptr;
+  FrameWidget *localFrame_ = nullptr;
 };
 
 #endif // MAINWINDOW_H

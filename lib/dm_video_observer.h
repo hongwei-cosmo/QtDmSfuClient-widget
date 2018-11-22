@@ -7,12 +7,9 @@
 #include "api/videosinkinterface.h"
 
 // Definitions of callback functions.
-typedef std::function<void (const uint8_t* data_y, const uint8_t* data_u,
-                            const uint8_t* data_v, const uint8_t* data_a,
-                            int stride_y, int stride_u, int stride_v,
-                            int stride_a,
-                            uint32_t width,
-                            uint32_t height)> I420FrameReady_callback;
+typedef  std::function<void (const uint8_t* buffer,
+                             int width,
+                             int height)> I420FrameReady_callback;
 typedef std::function<void()> LocalDataChannelReady_callback;
 typedef std::function<void(const char* msg)> DataFromDataChannelReady_callback;
 typedef std::function<void(const char* msg)> Failure_callback;
@@ -31,7 +28,7 @@ typedef std::function<void(const void* audio_data,
 class VideoObserver : public rtc::VideoSinkInterface<webrtc::VideoFrame> {
  public:
   VideoObserver() {}
-  ~VideoObserver() override {}
+  ~VideoObserver() override { delete [] buffer_; }
   void SetVideoCallback(I420FrameReady_callback callback);
 
  protected:
@@ -41,6 +38,9 @@ class VideoObserver : public rtc::VideoSinkInterface<webrtc::VideoFrame> {
  private:
   I420FrameReady_callback OnI420FrameReady = nullptr;
   std::mutex mutex;
+  uint8_t* buffer_ = nullptr;
+  int width_ =  0, height_ = 0;
+  size_t buffer_size_ = 0;
 };
 
 #endif  // DM_VIDEO_OBSERVER_H

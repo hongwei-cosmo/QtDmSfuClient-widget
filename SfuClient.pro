@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui multimedia
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -35,12 +35,16 @@ DEFINES += WIN32_LEAN_AND_MEAN
 CONFIG += c++14
 CONFIG += no_keywords
 
+# Use Precompiled headers (PCH)
+PRECOMPILED_HEADER  = stable.h
+
 SOURCES += \
         lib/controller.cpp \
         lib/qt_sfu_signaling.cpp \
         lib/dm_peer_connection.cpp \
         lib/dm_video_observer.cpp \
         lib/ChecksumMediaCrypto.cpp \
+        lib/frame_widget.cpp \
         ui/main.cpp \
         ui/mainwindow.cpp \
         ui/dialogconnetsfu.cpp \
@@ -49,8 +53,7 @@ SOURCES += \
         ui/dialogparticipant.cpp \
         ui/dialogseek.cpp \
         ui/main.cpp \
-        ui/mainwindow.cpp \
-    videorender.cpp
+        ui/mainwindow.cpp
 
 HEADERS += \
         lib/controller.h \
@@ -58,6 +61,7 @@ HEADERS += \
         lib/dm_peer_connection.h \
         lib/dm_video_observer.h \
         lib/ChecksumMediaCrypto.h \
+        lib/frame_widget.h \
         ui/mainwindow.h \
         ui/dialogconnetsfu.h \
         ui/dialogcreateroom.h \
@@ -65,7 +69,7 @@ HEADERS += \
         ui/dialogparticipant.h \
         ui/dialogseek.h \
         ui/mainwindow.h \
-    videorender.h
+    stable.h
 
 FORMS += \
         ui/mainwindow.ui \
