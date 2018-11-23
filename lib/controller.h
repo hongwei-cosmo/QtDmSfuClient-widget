@@ -34,6 +34,7 @@ public:
   std::function<void(const std::string &log)> logger = nullptr;
 
   virtual void Log(const std::string &log) final;
+  void Error(const std::string &err) { Log("[Error] " + err); }
 
 private Q_SLOTS:
   void onUpdateRemoteInfo();

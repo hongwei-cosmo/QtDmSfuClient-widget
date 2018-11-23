@@ -18,11 +18,14 @@ MainWindow::MainWindow(QWidget *parent) :
   ui->setupUi(this);
   localFrame_ = new FrameWidget();
   localFrame_->resize({640, 480});
-  ui->videoLayout->addWidget(localFrame_);
+  ui->smallVideosLayout->addWidget(localFrame_);
   remoteFrame_ = new FrameWidget();
   remoteFrame_->resize({640, 480});
-  ui->videoLayout->addWidget(remoteFrame_);
+  ui->mainVideoLayout->addWidget(remoteFrame_);
   controller_ = new Controller(this);
+  controller_->logger = [=](const std::string &log) {
+    ui->logWindow->appendPlainText(QString::fromStdString(log));
+  };
 }
 
 MainWindow::~MainWindow()

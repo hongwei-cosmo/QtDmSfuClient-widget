@@ -8,7 +8,7 @@ QSfuSignaling::QSfuSignaling(QObject *parent) : QObject(parent)
   // Set event handlers for sfu_
   sfu_->on<dm::Stream::Event::Published>([=](dm::Stream::Event::Published &r) {
     Log("Sfu event: Stream Published");
-    this->remoteSdpInfo_->addStream(r.streamInfo);
+    remoteSdpInfo_->addStream(r.streamInfo);
     Q_EMIT updateRemoteInfo();
   })
   .on<dm::Stream::Event::Unpublished>([=](dm::Stream::Event::Unpublished &r) {
@@ -40,10 +40,11 @@ void QSfuSignaling::createRoom()
   qDebug("[%s]", __func__);
   sfu_->createRoom(roomAccessPin_,
                         [this](const dm::Room::Created &r) {
-    Log("Create Room " + r.toString());
     if (!r.error) {
       roomId_ = r.result->id;
-      Log("\tid=" + roomId_);
+      Log("Room created, id: " + roomId_);
+    } else {
+      Error("Failed to create room");
     }
   });
 }
@@ -102,7 +103,7 @@ void QSfuSignaling::publishStream(const std::string &sdp, bool camera)
   sfu_->publish(roomId_, camera ? dm::StreamKind::Camera : dm::StreamKind::Desktop,
                 tag, streamInfo, [=](const dm::Stream::Published &published) {
     if (published.error) {
-      Log("PublishStream: Failed. Error: " + published.error->message);
+      Error("PublishStream: Failed: " + published.error->message);
     }
     Q_EMIT publishedStream((published.error?false:true));
   });

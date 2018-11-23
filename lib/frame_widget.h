@@ -55,22 +55,13 @@
 #include <QImage>
 
 //! [0]
-class FrameWidget : public QWidget
+class FrameWidget : public QLabel
 {
 public:
-  explicit FrameWidget(QWidget *parent = nullptr) : label(new QLabel(this)) {}
-  ~FrameWidget()
-  {
-    delete label;
-  }
+  explicit FrameWidget(QWidget *parent = nullptr) : QLabel(parent) {}
+  ~FrameWidget() = default;
 
   void drawImage(const QImage &image);
-  void resize(const QSize &size);
-
-protected:
-
-private:
-  QLabel *label = nullptr;
 };
 //! [0]
 

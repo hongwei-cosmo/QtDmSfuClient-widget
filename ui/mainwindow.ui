@@ -14,9 +14,29 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QVBoxLayout" name="verticalLayout">
+   <layout class="QVBoxLayout" name="verticalLayout" stretch="5,1">
     <item>
-     <layout class="QHBoxLayout" name="videoLayout"/>
+     <layout class="QHBoxLayout" name="videoLayout" stretch="1,3">
+      <item>
+       <layout class="QVBoxLayout" name="smallVideosLayout"/>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="mainVideoLayout"/>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QPlainTextEdit" name="logWindow">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="verticalScrollBarPolicy">
+       <enum>Qt::ScrollBarAsNeeded</enum>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>

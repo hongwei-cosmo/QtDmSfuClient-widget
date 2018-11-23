@@ -40,6 +40,7 @@ public:
   void setRoomAccessPin(const std::string& pin);
 
   virtual void Log(const std::string &msg) = 0;
+  virtual void Error(const std::string &msg) = 0;
 
 public Q_SLOTS:
   void onReceivedSfuMessage(const QString& message);

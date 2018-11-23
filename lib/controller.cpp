@@ -63,7 +63,7 @@ Controller::Controller(QWidget *mainWindow, QObject *parent) :
 
   pc_ = new rtc::RefCountedObject<DMPeerConnection>();
   if (!pc_->InitializePeerConnection(nullptr, 0, nullptr, nullptr, true)) {
-    Log("Initialize Peer Conection Failed");
+    Error("Initialize Peer Conection Failed");
   }
 }
 
@@ -97,8 +97,10 @@ bool Controller::connectSfu(const std::string& sfuUrl,
     connection_ = client_.get_connection(ws, ec);
     // Check error
     if (ec) {
-      Log("get_connection failed. " + std::to_string(ec.value()) + ec.message());
+      Error("Failed to connect to sfu: " + std::to_string(ec.value()) + ec.message());
       return false;
+    } else {
+      Log("Connected to sfu");
     }
 
     // Register our message handler
@@ -147,8 +149,8 @@ bool Controller::connectSfu(const std::string& sfuUrl,
     });
   }
   catch (websocketpp::exception const &e) {
-    Log("[EXCEPTION] connect:");
-    Log(e.what());
+    Error("[EXCEPTION] connect:");
+    Error(e.what());
     return false;
   }
 
@@ -171,8 +173,8 @@ bool Controller::disconnectSfu()
     connection_ = nullptr;
     Log("DISCONNECTED");
   } catch (websocketpp::exception const &e) {
-    Log("[EXCEPTION] close:");
-    Log(e.what());
+    Error("[EXCEPTION] close:");
+    Error(e.what());
     return false;
   }
 
@@ -186,7 +188,7 @@ void Controller::send(const std::string &message)
     // Send it
     connection_->send(message);
   } catch (...) {
-    Log("[ERROR]Controller::send() exception");
+    Error("Controller::send() exception");
   }
 }
 
@@ -231,23 +233,26 @@ void Controller::joinRoom()
   qDebug("[%s]", __func__);
 
   if (state == State::Joined) {
-    Log("Error: Already joined");
+    Error("Already Joined");
     return;
   }
 
   pc_->RegisterOnRemoteI420FrameReady([&](const uint8_t* buffer,
                                      int width, int height) {
-    qDebug("Remote Image %d, %d", width, height);
     QImage image(buffer, width, height, QImage::Format::Format_ARGB32);
     dynamic_cast<MainWindow*>(mainWindow_)->getRemoteFrame()->drawImage(image);
   });
 
   pc_->RegisterOnLocalSdpReadytoSend([this](const char *type, const char *sdp) {
      // join
-    sfu_->join(roomId_, roomAccessPin_, SDPInfo::parse(sdp), [this](const dm::Participant::Joined &joined) {
+    Q_UNUSED(type);
+    sfu_->join(roomId_, roomAccessPin_, SDPInfo::parse(sdp),
+               [this](const dm::Participant::Joined &joined) {
       if (joined.error) {
-        Log("Error: Join Room Failed");
+        Error("Join Room Failed");
         return;
+      } else {
+        Log("Joined room");
       }
 
       remoteSdpInfo_ = joined.result->sdpInfo;
@@ -256,17 +261,16 @@ void Controller::joinRoom()
       }
 
       if (!pc_->SetRemoteDescription("answer", remoteSdpInfo_->toString().c_str())) {
-        Log("Error: Set Remote Description Failed");
+        Error("Set Remote Description Failed");
         return;
       }
 
-      // TODO: Set profiles
-//      std::vector<dm::VideoProfile> profiles = {
-//        {"camera"	, dm::LayerTraversalAlgorithm::ZigZagSpatialTemporal},
-//        {"screenshare"	, dm::LayerTraversalAlgorithm::SpatialTemporal}
-//      };
-    });
+      // Default setting
+      lastN(1);
+      publishCamera();
 
+      // TODO: Set profiles
+    });
   });
   pc_->CreateOffer();
 }
@@ -280,7 +284,13 @@ void Controller::publish(bool camera)
     sfu_->publish(roomId_, camera ? dm::StreamKind::Camera : dm::StreamKind::Desktop,
                   tag, streamInfo, [=](const dm::Stream::Published &published) {
       if (published.error) {
-        Log("PublishStream: Failed. Error: " + published.error->message);
+        Error("Failed to publish stream: " + published.error->message);
+        return;
+      }
+
+      if (!pc_->SetRemoteDescription("answer", remoteSdpInfo_->toString().c_str())) {
+        Error("Set Remote Description Failed");
+        return;
       }
     });
   });
@@ -292,7 +302,6 @@ void Controller::publishCamera()
   qDebug("[%s]", __func__);
   pc_->RegisterOnLocalI420FrameReady([&](const uint8_t* buffer,
                                      int width, int height) {
-    qDebug("Image %d, %d", width, height);
     QImage image(buffer, width, height, QImage::Format::Format_ARGB32);
     dynamic_cast<MainWindow*>(mainWindow_)->getLocalFrame()->drawImage(image);
 
@@ -311,7 +320,7 @@ void Controller::publishDesktop()
 void Controller::Log(const std::string &log)
 {
   qDebug("[Log: %s]", log.c_str());
-//  if (logger) logger(log);
+  if (logger) logger(log);
 }
 
 void Controller::onCreatedJoinRoomOfferSuccess(const QJsonObject &sdp)
