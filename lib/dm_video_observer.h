@@ -7,9 +7,8 @@
 #include "api/videosinkinterface.h"
 
 // Definitions of callback functions.
-typedef  std::function<void (const uint8_t* buffer,
-                             int width,
-                             int height)> I420FrameReady_callback;
+typedef  std::function<void(const uint8_t* buffer,
+                            int width, int height)> I420FrameReady_callback;
 typedef std::function<void()> LocalDataChannelReady_callback;
 typedef std::function<void(const char* msg)> DataFromDataChannelReady_callback;
 typedef std::function<void(const char* msg)> Failure_callback;

@@ -55,8 +55,7 @@ Controller::Controller(QWidget *mainWindow, QObject *parent) :
     return ctx;
   });
 
-  connect(this, &QSfuSignaling::streamPublishedEvent, this, &Controller::onStreamPublished);
-  connect(this, &QSfuSignaling::streamUnpublishedEvent, this, &Controller::onStreamUnpublished);
+  connect(this, &QSfuSignaling::updateRemoteInfo, this, &Controller::onUpdateRemoteInfo);
   connect(this, &QSfuSignaling::participantJoinedEvent, this, &Controller::onParticipantJoined);
   connect(this, &QSfuSignaling::participantLeftEvent, this, &Controller::onParticipantLeft);
   connect(this, &QSfuSignaling::participantKickedEvent, this, &Controller::onParticipantKicked);
@@ -85,7 +84,8 @@ Controller::State Controller::getState() const
   return state;
 }
 
-bool Controller::connectSfu(const std::string& sfuUrl, const std::string& clientId)
+bool Controller::connectSfu(const std::string& sfuUrl,
+                            const std::string& clientId)
 {
   qDebug("[%s] url=%s, id=%s", __func__, sfuUrl.c_str(), clientId.c_str());
 
@@ -102,7 +102,8 @@ bool Controller::connectSfu(const std::string& sfuUrl, const std::string& client
     }
 
     // Register our message handler
-    connection_->set_message_handler([&](websocketpp::connection_hdl con, websocketpp::config::asio_client::message_type::ptr frame) {
+    connection_->set_message_handler([&](websocketpp::connection_hdl con,
+         websocketpp::config::asio_client::message_type::ptr frame) {
       // Pass to the sfu client
       this->callback_(frame->get_payload());
     });
@@ -164,7 +165,9 @@ bool Controller::disconnectSfu()
   try {
     Log("Disconnecting ...");
     // Stop client
-    client_.close(connection_, websocketpp::close::status::normal, std::string("disconnect"));
+    client_.close(connection_,
+                  websocketpp::close::status::normal,
+                  std::string("disconnect"));
     connection_ = nullptr;
     Log("DISCONNECTED");
   } catch (websocketpp::exception const &e) {
@@ -174,18 +177,6 @@ bool Controller::disconnectSfu()
   }
 
   return true;
-}
-
-void Controller::onConnectedSfu()
-{
-  Log("Successfully connect to SFU");
-  state = State::Connected;
-}
-
-void Controller::onDisconnectedSfu()
-{
-  qDebug("[%s]", __func__);
-  state = State::Disconnected;
 }
 
 void Controller::send(const std::string &message)
@@ -199,27 +190,32 @@ void Controller::send(const std::string &message)
   }
 }
 
-void Controller::onStreamPublished()
+void Controller::onUpdateRemoteInfo()
+{
+  qDebug("[%s]", __func__);
+  pc_->SetRemoteDescription("offer", remoteSdpInfo_->toString().c_str());
+  pc_->CreateAnswer();
+}
+
+void Controller::onParticipantJoined(const std::string &roomId,
+                                     const std::string &clientId,
+                                     const std::string &reason)
 {
   qDebug("[%s]", __func__);
 }
-void Controller::onStreamUnpublished(const std::string &streamId)
+void Controller::onParticipantLeft(const std::string &roomId,
+                                   const std::string &clientId,
+                                   const std::string &reason)
 {
   qDebug("[%s]", __func__);
 }
-void Controller::onParticipantJoined(const std::string &roomId, const std::string &clientId, const std::string &reason)
+void Controller::onParticipantKicked(const std::string &roomId,
+                                     const std::string &reason)
 {
   qDebug("[%s]", __func__);
 }
-void Controller::onParticipantLeft(const std::string &roomId, const std::string &clientId, const std::string &reason)
-{
-  qDebug("[%s]", __func__);
-}
-void Controller::onParticipantKicked(const std::string &roomId, const std::string &reason)
-{
-  qDebug("[%s]", __func__);
-}
-void Controller::onActiveSpeakerChanged(const std::string &roomId, const std::string &clientId)
+void Controller::onActiveSpeakerChanged(const std::string &roomId,
+                                        const std::string &clientId)
 {
   qDebug("[%s]", __func__);
 
@@ -239,7 +235,14 @@ void Controller::joinRoom()
     return;
   }
 
-  pc_->RegisterOnLocalSdpReadytoSend([this](const char*type, const char* sdp) {
+  pc_->RegisterOnRemoteI420FrameReady([&](const uint8_t* buffer,
+                                     int width, int height) {
+    qDebug("Remote Image %d, %d", width, height);
+    QImage image(buffer, width, height, QImage::Format::Format_ARGB32);
+    dynamic_cast<MainWindow*>(mainWindow_)->getRemoteFrame()->drawImage(image);
+  });
+
+  pc_->RegisterOnLocalSdpReadytoSend([this](const char *type, const char *sdp) {
      // join
     sfu_->join(roomId_, roomAccessPin_, SDPInfo::parse(sdp), [this](const dm::Participant::Joined &joined) {
       if (joined.error) {
@@ -247,12 +250,12 @@ void Controller::joinRoom()
         return;
       }
 
-      auto answserInfo = joined.result->sdpInfo;
+      remoteSdpInfo_ = joined.result->sdpInfo;
       for(auto stream : joined.result->streams) {
-        answserInfo->addStream(stream);
+        remoteSdpInfo_->addStream(stream);
       }
 
-      if (!pc_->SetRemoteDescription("answer", answserInfo->toString().c_str())) {
+      if (!pc_->SetRemoteDescription("answer", remoteSdpInfo_->toString().c_str())) {
         Log("Error: Set Remote Description Failed");
         return;
       }
@@ -268,6 +271,22 @@ void Controller::joinRoom()
   pc_->CreateOffer();
 }
 
+void Controller::publish(bool camera)
+{
+  pc_->RegisterOnLocalSdpReadytoSend([&](const char *type, const char *sdp) {
+    std::string tag = camera ? "camera" : "desktop";
+    auto sdpInfo = SDPInfo::parse(sdp);
+    auto streamInfo = sdpInfo->getStream(tag);
+    sfu_->publish(roomId_, camera ? dm::StreamKind::Camera : dm::StreamKind::Desktop,
+                  tag, streamInfo, [=](const dm::Stream::Published &published) {
+      if (published.error) {
+        Log("PublishStream: Failed. Error: " + published.error->message);
+      }
+    });
+  });
+  pc_->CreateOffer();
+}
+
 void Controller::publishCamera()
 {
   qDebug("[%s]", __func__);
@@ -279,11 +298,13 @@ void Controller::publishCamera()
 
   });
   pc_->AddStreams(false);
+  publish(true);
 }
 
 void Controller::publishDesktop()
 {
   state = State::Desktop;
+  publish(false);
 }
 
 // Note: this function can only be called in functions of Qbject class
@@ -321,8 +342,4 @@ void Controller::onCreatedAnswerSuccess(const QJsonObject &sdp)
 {
   qDebug("[%s]", __func__);
   Q_UNUSED(sdp);
-}
-
-void Controller::sendLocalSdp(const char* type, const char* sdp) {
-
 }

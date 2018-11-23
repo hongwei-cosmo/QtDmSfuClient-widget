@@ -18,9 +18,9 @@
 #include "rtc_base/ptr_util.h"
 
 // Names used for media stream labels
-const char kAudioLabel[] = "audio_label";
-const char kVideoLabel[] = "video_label";
-const char kStreamLabel[] = "stream_label";
+const char kAudioLabel[] = "audio";
+const char kVideoLabel[] = "video";
+const char kStreamLabel[] = "camera";
 
 namespace {
 static int g_peer_count = 0;
@@ -184,12 +184,8 @@ bool DMPeerConnection::CreateAnswer() {
   if (!peer_connection_.get())
     return false;
 
-  webrtc::FakeConstraints constraints;
-  if (mandatory_receive_) {
-    constraints.SetMandatoryReceiveAudio(true);
-    constraints.SetMandatoryReceiveVideo(true);
-  }
-  peer_connection_->CreateAnswer(this, &constraints);
+  webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
+  peer_connection_->CreateAnswer(this, options);
   return true;
 }
 
@@ -383,6 +379,7 @@ DMPeerConnection::OpenVideoCaptureDevice() {
   return capturer;
 }
 
+// Add local streams, will triger OnFrame
 void DMPeerConnection::AddStreams(bool audio_only) {
   if (active_streams_.find(kStreamLabel) != active_streams_.end())
     return;  // Already added.

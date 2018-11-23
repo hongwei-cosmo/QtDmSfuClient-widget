@@ -19,6 +19,9 @@ MainWindow::MainWindow(QWidget *parent) :
   localFrame_ = new FrameWidget();
   localFrame_->resize({640, 480});
   ui->videoLayout->addWidget(localFrame_);
+  remoteFrame_ = new FrameWidget();
+  remoteFrame_->resize({640, 480});
+  ui->videoLayout->addWidget(remoteFrame_);
   controller_ = new Controller(this);
 }
 
@@ -32,6 +35,11 @@ MainWindow::~MainWindow()
 FrameWidget *MainWindow::getLocalFrame()
 {
   return localFrame_;
+}
+
+FrameWidget *MainWindow::getRemoteFrame()
+{
+  return remoteFrame_;
 }
 
 Controller *MainWindow::controller() const

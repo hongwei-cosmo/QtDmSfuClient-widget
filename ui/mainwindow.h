@@ -18,6 +18,7 @@ public:
   ~MainWindow();
 
   FrameWidget *getLocalFrame();
+  FrameWidget *getRemoteFrame();
 
   Controller* controller() const;
 
@@ -66,6 +67,7 @@ private:
   Ui::MainWindow *ui = nullptr;
   Controller *controller_ = nullptr;
   FrameWidget *localFrame_ = nullptr;
+  FrameWidget *remoteFrame_ = nullptr;
 };
 
 #endif // MAINWINDOW_H

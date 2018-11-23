@@ -25,6 +25,8 @@ public:
   explicit Controller(QWidget *mainWindow, QObject *parent = nullptr);
   ~Controller();
   State getState() const;
+  bool connectSfu(const std::string &sfuUrl, const std::string &clientId);
+  bool disconnectSfu();
   virtual void joinRoom() final;
   virtual void send(const std::string &message) final;
   void publishCamera();
@@ -33,16 +35,8 @@ public:
 
   virtual void Log(const std::string &log) final;
 
-public Q_SLOTS:
-  bool connectSfu(const std::string &sfuUrl, const std::string &clientId);
-  bool disconnectSfu();
-
 private Q_SLOTS:
-  void onConnectedSfu();
-  void onDisconnectedSfu();
-
-  void onStreamPublished();
-  void onStreamUnpublished(const std::string &streamId);
+  void onUpdateRemoteInfo();
   void onParticipantJoined(const std::string &roomId, const std::string &clientId, const std::string &reason);
   void onParticipantLeft(const std::string &roomId, const std::string &clientId, const std::string &reason);
   void onParticipantKicked(const std::string &roomId, const std::string &reason);
@@ -61,11 +55,12 @@ private:
   websocketpp::client<websocketpp::config::asio_tls_client>::connection_ptr connection_;
   std::thread thread_;
   rtc::scoped_refptr<DMPeerConnection> pc_;
+
   QWidget *mainWindow_ = nullptr;
 
   State state = State::Disconnected;
 
-  void sendLocalSdp(const char* type, const char* sdp);
+  void publish(bool camera);
 };
 
 #endif // CONTROLLER_H

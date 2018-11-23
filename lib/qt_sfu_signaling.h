@@ -35,7 +35,6 @@ public:
   void lastN(int n);
 
   std::string getRoomId() const;
-  std::string getAnswerSdp() const;
   std::string getRoomAccessPin() const;
   void setRoomId(std::string roomId_);
   void setRoomAccessPin(const std::string& pin);
@@ -47,8 +46,7 @@ public Q_SLOTS:
 
 Q_SIGNALS:
   void sendSfuLog(const QString &log);
-  void streamPublishedEvent();
-  void streamUnpublishedEvent(const std::string &streamId);
+  void updateRemoteInfo();
   void participantJoinedEvent(const std::string &roomId, const std::string &clientId, const std::string &reason);
   void participantLeftEvent(const std::string &roomId, const std::string &clientId, const std::string &reason);
   void participantKickedEvent(const std::string &roomId, const std::string &reason);
@@ -62,7 +60,7 @@ protected:
   std::unique_ptr<dm::Client> sfu_;
   std::string roomId_;
   std::string roomAccessPin_ = "pin";
-  SDPInfo::shared sdpInfo_;
+  SDPInfo::shared remoteSdpInfo_;
   std::function<bool (const std::string&)> callback_ = nullptr;
 
   // send will be overrided in Controller

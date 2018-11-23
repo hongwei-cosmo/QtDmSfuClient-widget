@@ -8,13 +8,13 @@ QSfuSignaling::QSfuSignaling(QObject *parent) : QObject(parent)
   // Set event handlers for sfu_
   sfu_->on<dm::Stream::Event::Published>([=](dm::Stream::Event::Published &r) {
     Log("Sfu event: Stream Published");
-    this->sdpInfo_->addStream(r.streamInfo);
-    Q_EMIT streamPublishedEvent();
+    this->remoteSdpInfo_->addStream(r.streamInfo);
+    Q_EMIT updateRemoteInfo();
   })
   .on<dm::Stream::Event::Unpublished>([=](dm::Stream::Event::Unpublished &r) {
     Log("Sfu event: Stream unpublished");
-    sdpInfo_->removeStream(r.streamId);
-    Q_EMIT streamUnpublishedEvent(r.streamId);
+    remoteSdpInfo_->removeStream(r.streamId);
+    Q_EMIT updateRemoteInfo();
   })
   .on<dm::Participant::Event::Joined>([=](dm::Participant::Event::Joined &r) {
     Log("Sfu event: New Participant Joined");
@@ -170,12 +170,6 @@ void QSfuSignaling::setRoomAccessPin(const std::string& pin)
 {
   qDebug("[%s]", __func__);
   roomAccessPin_ = pin;
-}
-
-std::string QSfuSignaling::getAnswerSdp() const
-{
-  qDebug("[%s]", __func__);
-  return sdpInfo_->toString();
 }
 
 std::string QSfuSignaling::getRoomAccessPin() const

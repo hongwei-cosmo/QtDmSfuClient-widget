@@ -24,35 +24,11 @@ void VideoObserver::OnFrame(const webrtc::VideoFrame& frame) {
   if ((frame.width() != width_) || (frame.height() != height_)) {
     width_ = frame.width();
     height_ = frame.height();
-    buffer_size_ = width_ * height_ * 4; //BGRA
+    buffer_size_ = width_ * height_ * 4; // 32bit each pixel
     delete[] buffer_;
     buffer_ = new uint8_t[buffer_size_];
   }
 
   webrtc::ConvertFromI420(frame, webrtc::VideoType::kARGB, 0, buffer_);
   OnI420FrameReady(buffer_, width_, height_);
-
-  /*
-  rtc::scoped_refptr<webrtc::VideoFrameBuffer> buffer(
-      frame.video_frame_buffer());
-
-  if (buffer->type() != webrtc::VideoFrameBuffer::Type::kI420A) {
-    rtc::scoped_refptr<webrtc::I420BufferInterface> i420_buffer =
-        buffer->ToI420();
-    OnI420FrameReady(i420_buffer->DataY(), i420_buffer->DataU(),
-                     i420_buffer->DataV(), nullptr, i420_buffer->StrideY(),
-                     i420_buffer->StrideU(), i420_buffer->StrideV(), 0,
-                     frame.width(), frame.height());
-
-  } else {
-    // The buffer has alpha channel.
-    webrtc::I420ABufferInterface* i420a_buffer = buffer->GetI420A();
-
-    OnI420FrameReady(i420a_buffer->DataY(), i420a_buffer->DataU(),
-                     i420a_buffer->DataV(), i420a_buffer->DataA(),
-                     i420a_buffer->StrideY(), i420a_buffer->StrideU(),
-                     i420a_buffer->StrideV(), i420a_buffer->StrideA(),
-                     frame.width(), frame.height());
-  }
-  */
 }
