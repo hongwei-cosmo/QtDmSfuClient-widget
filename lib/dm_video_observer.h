@@ -38,7 +38,6 @@ class VideoObserver : public rtc::VideoSinkInterface<webrtc::VideoFrame> {
   I420FrameReady_callback OnI420FrameReady = nullptr;
   std::mutex mutex;
   uint8_t* buffer_ = nullptr;
-  int width_ =  0, height_ = 0;
   size_t buffer_size_ = 0;
 };
 

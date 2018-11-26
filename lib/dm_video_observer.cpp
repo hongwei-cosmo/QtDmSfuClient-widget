@@ -21,14 +21,13 @@ void VideoObserver::OnFrame(const webrtc::VideoFrame& frame) {
   if (!OnI420FrameReady)
     return;
 
-  if ((frame.width() != width_) || (frame.height() != height_)) {
-    width_ = frame.width();
-    height_ = frame.height();
-    buffer_size_ = width_ * height_ * 4; // 32bit each pixel
-    delete[] buffer_;
+  size_t new_size = frame.width() * frame.height() * 4;
+  if (new_size > buffer_size_) {
+    buffer_size_ = new_size;
+    delete [] buffer_;
     buffer_ = new uint8_t[buffer_size_];
   }
 
   webrtc::ConvertFromI420(frame, webrtc::VideoType::kARGB, 0, buffer_);
-  OnI420FrameReady(buffer_, width_, height_);
+  OnI420FrameReady(buffer_, frame.width(), frame.height());
 }
