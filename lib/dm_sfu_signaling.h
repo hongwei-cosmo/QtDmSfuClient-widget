@@ -1,5 +1,5 @@
-#ifndef QSFUSIGNALING_H
-#define QSFUSIGNALING_H
+#ifndef DMSFUSIGNALING_H
+#define DMSFUSIGNALING_H
 
 #include <functional>
 #include <memory>
@@ -10,12 +10,12 @@
 /**
  * @brief Qt Wrapper of class Client of dm-sfu-client-lib
  */
-class QSfuSignaling :
+class DMSfuSignaling :
     public dm::Client::Transport
 {
 public:
-  QSfuSignaling();
-  virtual ~QSfuSignaling() = default;
+  DMSfuSignaling();
+  virtual ~DMSfuSignaling() = default;
 
   void createRoom();
   void createAuditRoom(const std::string &recodingId);
@@ -56,4 +56,4 @@ protected:
   // send will be overrided in Controller
 };
 
-#endif // QSFUSIGNALING_H
+#endif // DMSFUSIGNALING_H

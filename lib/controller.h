@@ -4,13 +4,13 @@
 // Websocketpp
 #include "websocketpp/client.hpp"
 #include "websocketpp/config/asio_client.hpp"
-#include "qt_sfu_signaling.h"
+#include "dm_sfu_signaling.h"
 #include "dm_peer_connection.h"
 
 #include <QObject>
 #include <QJsonObject>
 
-class Controller final : public QSfuSignaling
+class Controller final : public DMSfuSignaling
 {
 public:
   enum class State {

@@ -40,7 +40,7 @@ PRECOMPILED_HEADER  = stable.h
 
 SOURCES += \
         lib/controller.cpp \
-        lib/qt_sfu_signaling.cpp \
+        lib/dm_sfu_signaling.cpp \
         lib/dm_peer_connection.cpp \
         lib/dm_video_observer.cpp \
         lib/ChecksumMediaCrypto.cpp \
@@ -57,7 +57,7 @@ SOURCES += \
 
 HEADERS += \
         lib/controller.h \
-        lib/qt_sfu_signaling.h \
+        lib/dm_sfu_signaling.h \
         lib/dm_peer_connection.h \
         lib/dm_video_observer.h \
         lib/ChecksumMediaCrypto.h \

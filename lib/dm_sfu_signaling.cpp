@@ -1,7 +1,7 @@
-#include "qt_sfu_signaling.h"
+#include "dm_sfu_signaling.h"
 #include <QDebug>
 
-QSfuSignaling::QSfuSignaling()
+DMSfuSignaling::DMSfuSignaling()
 {
   qDebug("[%s]", __func__);
   sfu_ = std::make_unique<dm::Client>(*this);
@@ -35,7 +35,7 @@ QSfuSignaling::QSfuSignaling()
   });
 }
 
-void QSfuSignaling::createRoom()
+void DMSfuSignaling::createRoom()
 {
   qDebug("[%s]", __func__);
   sfu_->createRoom(roomAccessPin_,
@@ -49,7 +49,7 @@ void QSfuSignaling::createRoom()
   });
 }
 
-void QSfuSignaling::createAuditRoom(const std::string& recodingId)
+void DMSfuSignaling::createAuditRoom(const std::string& recodingId)
 {
   qDebug("[%s]", __func__);
   sfu_->createAuditRoom(roomAccessPin_, recodingId,
@@ -61,7 +61,7 @@ void QSfuSignaling::createAuditRoom(const std::string& recodingId)
   });
 }
 
-void QSfuSignaling::destroyRoom()
+void DMSfuSignaling::destroyRoom()
 {
   qDebug("[%s]", __func__);
   sfu_->destroyRoom(roomId_, [this](const dm::Room::Destroyed &r) {
@@ -69,7 +69,7 @@ void QSfuSignaling::destroyRoom()
   });
 }
 
-void QSfuSignaling::seekParticipant(uint64_t offset)
+void DMSfuSignaling::seekParticipant(uint64_t offset)
 {
   qDebug("[%s]", __func__);
   sfu_->seek(roomId_, offset, [this](const dm::Participant::Seeked &r) {
@@ -77,7 +77,7 @@ void QSfuSignaling::seekParticipant(uint64_t offset)
   });
 }
 
-void QSfuSignaling::limitParticipant(uint16_t bitrate)
+void DMSfuSignaling::limitParticipant(uint16_t bitrate)
 {
   qDebug("[%s]", __func__);
   sfu_->limit(roomId_, bitrate, [this](const dm::Participant::Limited &r) {
@@ -86,7 +86,7 @@ void QSfuSignaling::limitParticipant(uint16_t bitrate)
 
 }
 
-void QSfuSignaling::leaveRoom()
+void DMSfuSignaling::leaveRoom()
 {
   qDebug("[%s]", __func__);
   sfu_->leave(roomId_, [this](const dm::Participant::Left &r) {
@@ -94,7 +94,7 @@ void QSfuSignaling::leaveRoom()
   });
 }
 
-void QSfuSignaling::unpublishStream(bool camera)
+void DMSfuSignaling::unpublishStream(bool camera)
 {
   qDebug("[%s]", __func__);
   std::string tag = camera ? "camera" : "desktop";
@@ -103,7 +103,7 @@ void QSfuSignaling::unpublishStream(bool camera)
   });
 }
 
-void QSfuSignaling::lastN(int n)
+void DMSfuSignaling::lastN(int n)
 {
   switch (n) {
   case 0:
@@ -140,42 +140,42 @@ void QSfuSignaling::lastN(int n)
   }
 }
 
-void QSfuSignaling::setRoomId(std::string roomId)
+void DMSfuSignaling::setRoomId(std::string roomId)
 {
   qDebug("[%s]", __func__);
   roomId_ = roomId;
 }
 
-std::string QSfuSignaling::getRoomId() const
+std::string DMSfuSignaling::getRoomId() const
 {
   qDebug("[%s]", __func__);
   return roomId_;
 }
 
-void QSfuSignaling::setRoomAccessPin(const std::string& pin)
+void DMSfuSignaling::setRoomAccessPin(const std::string& pin)
 {
   qDebug("[%s]", __func__);
   roomAccessPin_ = pin;
 }
 
-std::string QSfuSignaling::getRoomAccessPin() const
+std::string DMSfuSignaling::getRoomAccessPin() const
 {
   return roomAccessPin_;
 }
 
-void QSfuSignaling::onmessage(const std::function<bool (const std::string&)> &callback)
+void DMSfuSignaling::onmessage(const std::function<bool (const std::string&)> &callback)
 {
   qDebug("[%s]", __func__);
   this->callback_ = callback;
 }
 
-void QSfuSignaling::Log(const std::string &log)
+void DMSfuSignaling::Log(const std::string &log)
 {
   qDebug("[Log: %s]", log.c_str());
   if (logger) logger(log);
 }
 
-void QSfuSignaling::Error(const std::string &err)
+void DMSfuSignaling::Error(const std::string &err)
 {
   qCritical("[Error: %s]", err.c_str());
   if (logger) logger(err);

@@ -12,7 +12,7 @@ find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
 set(lib
   lib/controller.cpp
-  lib/qt_sfu_signaling.cpp
+  lib/dm_sfu_signaling.cpp
   )
 set(ui
   ui/mainwindow.cpp
