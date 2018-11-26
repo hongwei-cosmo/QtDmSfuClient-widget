@@ -197,24 +197,24 @@ void Controller::participantJoined(const std::string &roomId,
                                      const std::string &clientId,
                                      const std::string &reason)
 {
-  qDebug("[%s]", __func__);
+  qDebug("[%s] ClientId: %s", __func__, clientId.c_str());
 }
 void Controller::participantLeft(const std::string &roomId,
                                    const std::string &clientId,
                                    const std::string &reason)
 {
-  qDebug("[%s]", __func__);
+  qDebug("[%s] ClientId: %s", __func__, clientId.c_str());
 }
 void Controller::participantKicked(const std::string &roomId,
                                      const std::string &reason)
 {
   qDebug("[%s]", __func__);
 }
+
 void Controller::activeSpeakerChanged(const std::string &roomId,
                                         const std::string &clientId)
 {
-  qDebug("[%s]", __func__);
-
+  qDebug("[%s] ClientId: %s", __func__, clientId.c_str());
 }
 
 void Controller::joinRoom()

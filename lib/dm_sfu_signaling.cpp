@@ -7,21 +7,21 @@ DMSfuSignaling::DMSfuSignaling()
   sfu_ = std::make_unique<dm::Client>(*this);
   // Set event handlers for sfu_
   sfu_->on<dm::Stream::Event::Published>([=](dm::Stream::Event::Published &r) {
-    Log("Sfu event: Stream Published");
+    Log("Sfu event: Add Steam ID = " + r.streamInfo->getId());
     remoteSdpInfo_->addStream(r.streamInfo);
     updateRemoteInfo();
   })
   .on<dm::Stream::Event::Unpublished>([=](dm::Stream::Event::Unpublished &r) {
-    Log("Sfu event: Stream unpublished");
+    Log("Sfu event: Remove Stream ID = " + r.streamId);
     remoteSdpInfo_->removeStream(r.streamId);
     updateRemoteInfo();
   })
   .on<dm::Participant::Event::Joined>([=](dm::Participant::Event::Joined &r) {
-    Log("Sfu event: New Participant Joined");
+    Log("Sfu event: New Participant Joined. ID: " + r.clientId);
     participantJoined(r.roomId, r.clientId, r.reason);
   })
   .on<dm::Participant::Event::Left>([=](dm::Participant::Event::Left &r) {
-    Log("Sfu event: Participant Left");
+    Log("Sfu event: Participant Left. ID: " + r.clientId);
     participantLeft(r.roomId, r.clientId, r.reason);
   })
   .on<dm::Participant::Event::Kicked>([=](dm::Participant::Event::Kicked &r) {
@@ -30,7 +30,7 @@ DMSfuSignaling::DMSfuSignaling()
   })
   .on<dm::Participant::Event::ActiveSpeakerChanded>(
     [=](dm::Participant::Event::ActiveSpeakerChanded &r) {
-      Log("Sfu event: Active Speaker Changed");
+      Log("Sfu event: Active Speaker Changed to " + r.clientId);
       activeSpeakerChanged(r.roomId, r.clientId);
   });
 }
@@ -172,11 +172,11 @@ void DMSfuSignaling::onmessage(const std::function<bool (const std::string&)> &c
 void DMSfuSignaling::Log(const std::string &log)
 {
   qDebug("[Log: %s]", log.c_str());
-  if (logger) logger(log);
+//  if (logger) logger(log);
 }
 
 void DMSfuSignaling::Error(const std::string &err)
 {
   qCritical("[Error: %s]", err.c_str());
-  if (logger) logger(err);
+//  if (logger) logger(err);
 }

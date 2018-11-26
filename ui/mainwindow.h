@@ -64,10 +64,10 @@ private Q_SLOTS:
   void on_actionSaveLog_triggered();
 
 private:
+  static const int kFrameCount = 5;
   Ui::MainWindow *ui = nullptr;
   Controller *controller_ = nullptr;
-  FrameWidget *localFrame_ = nullptr;
-  FrameWidget *remoteFrame_ = nullptr;
+  FrameWidget *frames_[kFrameCount];
 };
 
 #endif // MAINWINDOW_H
