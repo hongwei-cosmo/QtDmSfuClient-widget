@@ -7,18 +7,14 @@
 
 #include "Client.h"
 
-// NOTE: Must include QObject after Client.h
-#include <QObject>
 /**
  * @brief Qt Wrapper of class Client of dm-sfu-client-lib
  */
 class QSfuSignaling :
-    public QObject,
     public dm::Client::Transport
 {
-  Q_OBJECT
 public:
-  explicit QSfuSignaling(QObject *parent = nullptr);
+  QSfuSignaling();
   virtual ~QSfuSignaling() = default;
 
   void createRoom();
@@ -38,18 +34,7 @@ public:
   void setRoomId(std::string roomId_);
   void setRoomAccessPin(const std::string& pin);
 
-  virtual void Log(const std::string &msg) = 0;
-  virtual void Error(const std::string &msg) = 0;
-
-public Q_SLOTS:
-  void onReceivedSfuMessage(const QString& message);
-
-Q_SIGNALS:
-  void updateRemoteInfo();
-  void participantJoinedEvent(const std::string &roomId, const std::string &clientId, const std::string &reason);
-  void participantLeftEvent(const std::string &roomId, const std::string &clientId, const std::string &reason);
-  void participantKickedEvent(const std::string &roomId, const std::string &reason);
-  void activeSpeakerChangedEvent(const std::string &roomId, const std::string &clientId);
+  std::function<void(const std::string &log)> logger = nullptr;
 
 protected:
   std::unique_ptr<dm::Client> sfu_;
@@ -58,8 +43,17 @@ protected:
   SDPInfo::shared remoteSdpInfo_;
   std::function<bool (const std::string&)> callback_ = nullptr;
 
-  // send will be overrided in Controller
+  void Log(const std::string &msg);
+  void Error(const std::string &msg);
+
+  virtual void updateRemoteInfo() = 0;
+  virtual void participantJoined(const std::string &roomId, const std::string &clientId, const std::string &reason) = 0;
+  virtual void participantLeft(const std::string &roomId, const std::string &clientId, const std::string &reason) = 0;
+  virtual void participantKicked(const std::string &roomId, const std::string &reason) = 0;
+  virtual void activeSpeakerChanged(const std::string &roomId, const std::string &clientId) = 0;
+
   virtual void onmessage(const std::function<bool(const std::string &message)> &callback) final;
+  // send will be overrided in Controller
 };
 
 #endif // QSFUSIGNALING_H

@@ -17,7 +17,7 @@ void VideoObserver::SetVideoCallback(I420FrameReady_callback callback) {
 }
 
 void VideoObserver::OnFrame(const webrtc::VideoFrame& frame) {
-  std::unique_lock<std::mutex> lock(mutex);
+  std::lock_guard<std::mutex> lock(mutex);
   if (!OnI420FrameReady)
     return;
 

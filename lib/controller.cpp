@@ -7,8 +7,8 @@
 
 using namespace nlohmann;
 
-Controller::Controller(QWidget *mainWindow, QObject *parent) :
-  QSfuSignaling(parent), mainWindow_(mainWindow)
+Controller::Controller(QWidget *mainWindow) :
+  mainWindow_(mainWindow)
 {
   // Set logging to be pretty verbose (everything except message payloads)
   client_.set_access_channels(websocketpp::log::alevel::all);
@@ -54,12 +54,6 @@ Controller::Controller(QWidget *mainWindow, QObject *parent) :
     }
     return ctx;
   });
-
-  connect(this, &QSfuSignaling::updateRemoteInfo, this, &Controller::onUpdateRemoteInfo);
-  connect(this, &QSfuSignaling::participantJoinedEvent, this, &Controller::onParticipantJoined);
-  connect(this, &QSfuSignaling::participantLeftEvent, this, &Controller::onParticipantLeft);
-  connect(this, &QSfuSignaling::participantKickedEvent, this, &Controller::onParticipantKicked);
-  connect(this, &QSfuSignaling::activeSpeakerChangedEvent, this, &Controller::onActiveSpeakerChanged);
 
   pc_ = new rtc::RefCountedObject<DMPeerConnection>();
   if (!pc_->InitializePeerConnection(nullptr, 0, nullptr, nullptr, true)) {
@@ -192,40 +186,35 @@ void Controller::send(const std::string &message)
   }
 }
 
-void Controller::onUpdateRemoteInfo()
+void Controller::updateRemoteInfo()
 {
   qDebug("[%s]", __func__);
   pc_->SetRemoteDescription("offer", remoteSdpInfo_->toString().c_str());
   pc_->CreateAnswer();
 }
 
-void Controller::onParticipantJoined(const std::string &roomId,
+void Controller::participantJoined(const std::string &roomId,
                                      const std::string &clientId,
                                      const std::string &reason)
 {
   qDebug("[%s]", __func__);
 }
-void Controller::onParticipantLeft(const std::string &roomId,
+void Controller::participantLeft(const std::string &roomId,
                                    const std::string &clientId,
                                    const std::string &reason)
 {
   qDebug("[%s]", __func__);
 }
-void Controller::onParticipantKicked(const std::string &roomId,
+void Controller::participantKicked(const std::string &roomId,
                                      const std::string &reason)
 {
   qDebug("[%s]", __func__);
 }
-void Controller::onActiveSpeakerChanged(const std::string &roomId,
+void Controller::activeSpeakerChanged(const std::string &roomId,
                                         const std::string &clientId)
 {
   qDebug("[%s]", __func__);
 
-}
-
-void Controller::onPublishedStream(bool success)
-{
-  qDebug("[%s]", __func__);
 }
 
 void Controller::joinRoom()
@@ -314,41 +303,4 @@ void Controller::publishDesktop()
 {
   state = State::Desktop;
   publish(false);
-}
-
-// Note: this function can only be called in functions of Qbject class
-void Controller::Log(const std::string &log)
-{
-  qDebug("[Log: %s]", log.c_str());
-  if (logger) logger(log);
-}
-
-void Controller::onCreatedJoinRoomOfferSuccess(const QJsonObject &sdp)
-{
-  qDebug("[%s]", __func__);
-}
-
-void Controller::onCreatedPublishCameraOfferSuccess(const QJsonObject &sdp)
-{
-  qDebug("[%s]", __func__);
-}
-
-void Controller::onCreatedPublishDesktopOfferSuccess(const QJsonObject &sdp)
-{
-  qDebug("[%s]", __func__);
-}
-
-void Controller::onGotICECandidate(const QJsonObject &candidate)
-{
-  qDebug("[%s]", __func__);
-  Q_UNUSED(candidate);
-}
-void Controller::onSetRemoteDescriptionSuccess()
-{
-  qDebug("[%s]", __func__);
-}
-void Controller::onCreatedAnswerSuccess(const QJsonObject &sdp)
-{
-  qDebug("[%s]", __func__);
-  Q_UNUSED(sdp);
 }

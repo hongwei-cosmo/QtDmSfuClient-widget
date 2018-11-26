@@ -10,9 +10,8 @@
 #include <QObject>
 #include <QJsonObject>
 
-class Controller : public QSfuSignaling
+class Controller final : public QSfuSignaling
 {
-  Q_OBJECT
 public:
   enum class State {
     Disconnected  = 0b0000,
@@ -22,34 +21,21 @@ public:
     Desktop       = 0b1011,
   };
 
-  explicit Controller(QWidget *mainWindow, QObject *parent = nullptr);
+  explicit Controller(QWidget *mainWindow);
   ~Controller();
   State getState() const;
   bool connectSfu(const std::string &sfuUrl, const std::string &clientId);
   bool disconnectSfu();
-  virtual void joinRoom() final;
-  virtual void send(const std::string &message) final;
+  virtual void joinRoom() override;
+  virtual void send(const std::string &message) override;
   void publishCamera();
   void publishDesktop();
-  std::function<void(const std::string &log)> logger = nullptr;
 
-  virtual void Log(const std::string &log) final;
-  void Error(const std::string &err) { Log("[Error] " + err); }
-
-private Q_SLOTS:
-  void onUpdateRemoteInfo();
-  void onParticipantJoined(const std::string &roomId, const std::string &clientId, const std::string &reason);
-  void onParticipantLeft(const std::string &roomId, const std::string &clientId, const std::string &reason);
-  void onParticipantKicked(const std::string &roomId, const std::string &reason);
-  void onActiveSpeakerChanged(const std::string &roomId, const std::string &clientId);
-  void onPublishedStream(bool success);
-
-  void onCreatedJoinRoomOfferSuccess(const QJsonObject &sdp);
-  void onCreatedPublishCameraOfferSuccess(const QJsonObject &sdp);
-  void onCreatedPublishDesktopOfferSuccess(const QJsonObject &sdp);
-  void onGotICECandidate(const QJsonObject &candidate);
-  void onSetRemoteDescriptionSuccess();
-  void onCreatedAnswerSuccess(const QJsonObject &sdp);
+  void updateRemoteInfo() override;
+  void participantJoined(const std::string &roomId, const std::string &clientId, const std::string &reason) override;
+  void participantLeft(const std::string &roomId, const std::string &clientId, const std::string &reason) override;
+  void participantKicked(const std::string &roomId, const std::string &reason) override;
+  void activeSpeakerChanged(const std::string &roomId, const std::string &clientId) override;
 
 private:
   websocketpp::client<websocketpp::config::asio_tls_client> client_;

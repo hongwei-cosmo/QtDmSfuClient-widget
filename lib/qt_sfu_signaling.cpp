@@ -1,7 +1,7 @@
 #include "qt_sfu_signaling.h"
 #include <QDebug>
 
-QSfuSignaling::QSfuSignaling(QObject *parent) : QObject(parent)
+QSfuSignaling::QSfuSignaling()
 {
   qDebug("[%s]", __func__);
   sfu_ = std::make_unique<dm::Client>(*this);
@@ -9,29 +9,29 @@ QSfuSignaling::QSfuSignaling(QObject *parent) : QObject(parent)
   sfu_->on<dm::Stream::Event::Published>([=](dm::Stream::Event::Published &r) {
     Log("Sfu event: Stream Published");
     remoteSdpInfo_->addStream(r.streamInfo);
-    Q_EMIT updateRemoteInfo();
+    updateRemoteInfo();
   })
   .on<dm::Stream::Event::Unpublished>([=](dm::Stream::Event::Unpublished &r) {
     Log("Sfu event: Stream unpublished");
     remoteSdpInfo_->removeStream(r.streamId);
-    Q_EMIT updateRemoteInfo();
+    updateRemoteInfo();
   })
   .on<dm::Participant::Event::Joined>([=](dm::Participant::Event::Joined &r) {
     Log("Sfu event: New Participant Joined");
-    Q_EMIT participantJoinedEvent(r.roomId, r.clientId, r.reason);
+    participantJoined(r.roomId, r.clientId, r.reason);
   })
   .on<dm::Participant::Event::Left>([=](dm::Participant::Event::Left &r) {
     Log("Sfu event: Participant Left");
-    Q_EMIT participantLeftEvent(r.roomId, r.clientId, r.reason);
+    participantLeft(r.roomId, r.clientId, r.reason);
   })
   .on<dm::Participant::Event::Kicked>([=](dm::Participant::Event::Kicked &r) {
     Log("Sfu event: Participant Kicked");
-    Q_EMIT participantKickedEvent(r.roomId, r.reason);
+    participantKicked(r.roomId, r.reason);
   })
   .on<dm::Participant::Event::ActiveSpeakerChanded>(
     [=](dm::Participant::Event::ActiveSpeakerChanded &r) {
       Log("Sfu event: Active Speaker Changed");
-      Q_EMIT activeSpeakerChangedEvent(r.roomId, r.clientId);
+      activeSpeakerChanged(r.roomId, r.clientId);
   });
 }
 
@@ -163,14 +163,20 @@ std::string QSfuSignaling::getRoomAccessPin() const
   return roomAccessPin_;
 }
 
-void QSfuSignaling::onReceivedSfuMessage(const QString& message)
-{
-  qDebug("[%s]", __func__);
-  callback_(message.toStdString());
-}
-
 void QSfuSignaling::onmessage(const std::function<bool (const std::string&)> &callback)
 {
   qDebug("[%s]", __func__);
   this->callback_ = callback;
+}
+
+void QSfuSignaling::Log(const std::string &log)
+{
+  qDebug("[Log: %s]", log.c_str());
+  if (logger) logger(log);
+}
+
+void QSfuSignaling::Error(const std::string &err)
+{
+  qCritical("[Error: %s]", err.c_str());
+  if (logger) logger(err);
 }

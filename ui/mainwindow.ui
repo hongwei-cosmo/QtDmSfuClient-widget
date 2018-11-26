@@ -21,7 +21,7 @@
        <layout class="QVBoxLayout" name="smallVideosLayout"/>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="mainVideoLayout"/>
+       <layout class="QGridLayout" name="mainVideoLayout"/>
       </item>
      </layout>
     </item>
@@ -35,6 +35,9 @@
       </property>
       <property name="verticalScrollBarPolicy">
        <enum>Qt::ScrollBarAsNeeded</enum>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
       </property>
      </widget>
     </item>
