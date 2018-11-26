@@ -94,21 +94,6 @@ void QSfuSignaling::leaveRoom()
   });
 }
 
-void QSfuSignaling::publishStream(const std::string &sdp, bool camera)
-{
-  qDebug("[%s]", __func__);
-  std::string tag = camera ? "camera" : "desktop";
-  auto sdpInfo = SDPInfo::parse(sdp);
-  auto streamInfo = sdpInfo->getStream(tag);
-  sfu_->publish(roomId_, camera ? dm::StreamKind::Camera : dm::StreamKind::Desktop,
-                tag, streamInfo, [=](const dm::Stream::Published &published) {
-    if (published.error) {
-      Error("PublishStream: Failed: " + published.error->message);
-    }
-    Q_EMIT publishedStream((published.error?false:true));
-  });
-}
-
 void QSfuSignaling::unpublishStream(bool camera)
 {
   qDebug("[%s]", __func__);

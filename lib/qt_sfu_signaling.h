@@ -30,7 +30,6 @@ public:
   void seekParticipant(uint64_t offset);
   void limitParticipant(uint16_t bitrate);
   void leaveRoom();
-  void publishStream(const std::string &sdp, bool camera);
   void unpublishStream(bool camera);
   void lastN(int n);
 
@@ -46,16 +45,11 @@ public Q_SLOTS:
   void onReceivedSfuMessage(const QString& message);
 
 Q_SIGNALS:
-  void sendSfuLog(const QString &log);
   void updateRemoteInfo();
   void participantJoinedEvent(const std::string &roomId, const std::string &clientId, const std::string &reason);
   void participantLeftEvent(const std::string &roomId, const std::string &clientId, const std::string &reason);
   void participantKickedEvent(const std::string &roomId, const std::string &reason);
   void activeSpeakerChangedEvent(const std::string &roomId, const std::string &clientId);
-  void gotAnswerInfo(const std::string &sdp);
-
-  void publishedStream(bool success);
-
 
 protected:
   std::unique_ptr<dm::Client> sfu_;
