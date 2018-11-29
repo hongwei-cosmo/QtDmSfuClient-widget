@@ -51,7 +51,7 @@ Controller::Controller(QWidget *mainWindow) :
 
     } catch (std::exception &e) {
       qDebug("[EXCEPTION] ctx set_options:");
-      qDebug(e.what());
+      qDebug("%s", e.what());
       qDebug("Peer verification is diabled");
     }
     return ctx;

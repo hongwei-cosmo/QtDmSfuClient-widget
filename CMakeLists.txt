@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR)
 project(QtDmSfuClient)
 
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(CMAKE_AUTOMOC ON)
@@ -10,11 +14,13 @@ find_package(libwebrtc REQUIRED)
 find_package(dm-sfu-signaling REQUIRED)
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
-set(lib
+set(sources
   lib/controller.cpp
   lib/dm_sfu_signaling.cpp
-  )
-set(ui
+  lib/dm_peer_connection.cpp
+  lib/dm_video_observer.cpp
+  lib/ChecksumMediaCrypto.cpp
+  lib/frame_widget.cpp
   ui/mainwindow.cpp
   ui/main.cpp
   ui/dialogconnetsfu.cpp
@@ -22,6 +28,8 @@ set(ui
   ui/dialogparticipant.cpp
   ui/dialogseek.cpp
   ui/dialoglimit.cpp
+  )
+set(forms
   ui/mainwindow.ui
   ui/dialogconnetsfu.ui
   ui/dialogcreateroom.ui
@@ -29,10 +37,7 @@ set(ui
   ui/dialogseek.ui
   ui/dialoglimit.ui
   )
-set(resources
-  ui/main.qrc
-  )
-add_executable(QtDmSfuClient MACOSX_BUNDLE ${lib} ${ui} ${resources})
+add_executable(QtDmSfuClient MACOSX_BUNDLE ${sources} ${forms})
 if(APPLE)
   set_target_properties(QtDmSfuClient PROPERTIES
     MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/ui/Info.plist"
