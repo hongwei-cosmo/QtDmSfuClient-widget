@@ -229,7 +229,7 @@ void Controller::joinRoom()
   pc_->RegisterOnRemoteI420FrameReady([&](const uint8_t* buffer,
                                      int width, int height) {
     QImage image(buffer, width, height, QImage::Format::Format_ARGB32);
-    dynamic_cast<MainWindow*>(mainWindow_)->getRemoteFrame()->drawImage(image);
+    Q_EMIT dynamic_cast<MainWindow*>(mainWindow_)->getRemoteFrame()->paintImage(image);
   });
 
   pc_->RegisterOnLocalSdpReadytoSend([this](const char *type, const char *sdp) {
@@ -292,8 +292,7 @@ void Controller::publishCamera()
   pc_->RegisterOnLocalI420FrameReady([&](const uint8_t* buffer,
                                      int width, int height) {
     QImage image(buffer, width, height, QImage::Format::Format_ARGB32);
-    dynamic_cast<MainWindow*>(mainWindow_)->getLocalFrame()->drawImage(image);
-
+    Q_EMIT dynamic_cast<MainWindow*>(mainWindow_)->getLocalFrame()->paintImage(image);
   });
   pc_->AddStreams(false);
   publish(true);

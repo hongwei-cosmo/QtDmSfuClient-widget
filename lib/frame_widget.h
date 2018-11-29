@@ -57,11 +57,17 @@
 //! [0]
 class FrameWidget : public QLabel
 {
+  Q_OBJECT
+
 public:
-  explicit FrameWidget(QWidget *parent = nullptr) : QLabel(parent) {}
+  explicit FrameWidget(QWidget *parent = nullptr);
   ~FrameWidget() = default;
 
-  void drawImage(const QImage &image);
+Q_SIGNALS:
+  void paintImage(const QImage &image);
+
+private Q_SLOTS:
+  void onPaintImage(const QImage &image);
 };
 //! [0]
 
