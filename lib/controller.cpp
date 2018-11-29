@@ -18,7 +18,7 @@ Controller::Controller(QWidget *mainWindow) :
   client_.init_asio();
 
   // Register our tls hanlder
-  client_.set_tls_init_handler([&](...) {
+  client_.set_tls_init_handler([&](websocketpp::connection_hdl con) {
     // Create context
     auto ctx = websocketpp::lib::make_shared<asio::ssl::context>(asio::ssl::context::tlsv12_client);
     std::string certs = QStandardPaths::locate(QStandardPaths::HomeLocation,
@@ -107,7 +107,7 @@ bool Controller::connectSfu(const std::string& sfuUrl,
     });
 
     // Set close hanlder
-    connection_->set_close_handler([&](...) {
+    connection_->set_close_handler([&](websocketpp::connection_hdl con) {
       // Call listener
       qDebug("Connection close handler");
       // Don't wait for connection close
@@ -117,7 +117,7 @@ bool Controller::connectSfu(const std::string& sfuUrl,
     });
 
     // Set failure handler
-    connection_->set_fail_handler([&](...) {
+    connection_->set_fail_handler([&](websocketpp::connection_hdl con) {
       // Call listener
       qDebug("Connection fail handler");
       // Don't wait for connection close
@@ -183,8 +183,9 @@ void Controller::send(const std::string &message)
   try {
     // Send it
     connection_->send(message);
-  } catch (...) {
+  } catch (std::exception &e) {
     Error("Controller::send() exception");
+    Error(e.what());
   }
 }
 
