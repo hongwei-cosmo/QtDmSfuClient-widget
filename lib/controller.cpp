@@ -2,8 +2,7 @@
 
 #include <QDebug>
 #include <QImage>
-#include <QPainter>
-#include <QLabel>
+#include <QStandardPaths>
 
 using namespace nlohmann;
 
@@ -22,6 +21,9 @@ Controller::Controller(QWidget *mainWindow) :
   client_.set_tls_init_handler([&](...) {
     // Create context
     auto ctx = websocketpp::lib::make_shared<asio::ssl::context>(asio::ssl::context::tlsv12_client);
+    std::string certs = QStandardPaths::locate(QStandardPaths::HomeLocation,
+                           "certs",
+                           QStandardPaths::LocateDirectory).toStdString();
 
     try {
       // Removes support for undesired TLS versions
@@ -33,14 +35,14 @@ Controller::Controller(QWidget *mainWindow) :
         asio::ssl::context::single_dh_use);
 
       //Try to setup certificate, do not use if not found
-      qDebug("Trying to load certificate...");
+      qDebug("Trying to load certification from %s", certs.c_str());
       // Loads CA certs file used to verify peers (DM_SFU)
-      ctx->load_verify_file("C:/certs/ca_server.pem");
+      ctx->load_verify_file(certs + "/ca_server.pem");
       // Sets lists of of ciphers offered and accepted
       SSL_CTX_set_cipher_list(ctx->native_handle(), "ECDHE-RSA-AES256-GCM-SHA384");
       // Loads client certificate and private key
-      ctx->use_certificate_file("C:/certs/client.pem", asio::ssl::context::file_format::pem);
-      ctx->use_private_key_file("C:/certs/client.key", asio::ssl::context::file_format::pem);
+      ctx->use_certificate_file(certs + "/client.pem", asio::ssl::context::file_format::pem);
+      ctx->use_private_key_file(certs + "/client.key", asio::ssl::context::file_format::pem);
       // Activates verification mode and rejects unverified peers
 //      ctx->set_verify_mode(asio::ssl::context::verify_peer
 //                         | asio::ssl::context::verify_fail_if_no_peer_cert);
